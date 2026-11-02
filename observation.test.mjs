@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, stat, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { runObservation } from './observation.mjs';
+import { runObservation, runDiscovery } from './observation.mjs';
 const config = { hostOrigin: 'https://host.example', providerOrigin: 'https://devtron.example',
  scope: { boardUID: 'board000001', resourceUID: 'resour00001', appRevision: 'a'.repeat(64), bindingRevision: 'b'.repeat(64),
  appId: 1064, environmentId: 146, externalId: 'app-1064', limit: 50 } };
@@ -34,5 +34,23 @@ test('partial batch failure saves all events and explicit recovery retains ident
   assert.ok(bodies.slice(0, 2).map(String).every(body => resent.includes(body)));
   await assert.rejects(runObservation({ ...args, config: { ...config, hostOrigin: 'https://other.example' }, resend: true }, request), /destination changed/);
   assert.equal(bodies.length, 5); assert.equal(await readFile(path, 'utf8'), saved);
+ } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('discovery reads provider only and never touches the signal store', async () => {
+ const directory = await mkdtemp(join(tmpdir(), 'devtron-discovery-'));
+ try {
+  const path = join(directory, 'batch.json'); let reads = 0;
+  const request = async (url) => {
+   reads++;
+   if (!url.startsWith(config.providerOrigin)) throw new Error('unexpected host write');
+   if (!url.endsWith('/app/list')) throw new Error('unexpected provider route');
+   return new Response(JSON.stringify({ code: 200, result: { appCount: 1, appContainers: [
+     { appId: 1064, appName: 'core-api', environments: [{ appId: 1064, appName: 'core-api', environmentId: 146, environmentName: 'prod' }] } ] } }));
+  };
+  const page = await runDiscovery(config, credentials, { search: 'core' }, request);
+  assert.deepEqual(page.resources, [{ appId: 1064, appName: 'core-api', environmentId: 146, environmentName: 'prod' }]);
+  assert.equal(reads, 1);
+  assert.equal(await readFile(path, 'utf8').then(() => true, () => false), false);
  } finally { await rm(directory, { recursive: true, force: true }); }
 });

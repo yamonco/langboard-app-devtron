@@ -60,6 +60,33 @@ test('refresh caps the batch, persists first and publishes bounded envelopes', a
   assert.equal(saved.length, 1); assert.equal(saved[0].length, 25); assert.equal(published.length, 25);
   assert.equal(saved[0].every(envelope => envelope.board_uid === scope.boardUID), true);
 });
+test('generic discovery lists bounded app-environment resources', async () => {
+  const calls = [];
+  const api = devtronApi({ origin: 'https://devtron.example', token: 'secret-token' }, async (url, init) => {
+    calls.push([url, init]); return Response.json({ code: 200, result: { appCount: 2, appContainers: [
+      { appId: 1064, appName: 'core-api', environments: [
+        { appId: 1064, appName: 'core-api', environmentId: 146, environmentName: 'prod' },
+        { appId: 1064, appName: 'core-api', environmentId: 147, environmentName: 'staging' } ] },
+      { appId: 1065, appName: 'worker', environments: [] } ] } });
+  });
+  const page = await api.listApplications({ search: 'core', offset: 0, size: 50 });
+  assert.equal(page.total, 2);
+  assert.deepEqual(page.resources.map(r => [r.appId, r.environmentName]),
+    [[1064, 'prod'], [1064, 'staging']]);
+  const [url, init] = calls[0];
+  assert.equal(url, 'https://devtron.example/orchestrator/app/list');
+  assert.equal(init.method, 'POST');
+  assert.deepEqual(JSON.parse(init.body), { appNameSearch: 'core', offset: 0, size: 50 });
+  const missing = devtronApi({ origin: 'https://devtron.example', token: 'secret-token' }, async () =>
+    Response.json({ code: 400, result: null }));
+  await assert.rejects(missing.listApplications(), /Invalid Devtron application inventory/);
+  await assert.rejects(api.listApplications({ size: 251 }), /Invalid application page/);
+  await assert.rejects(api.listApplications({ search: 'x'.repeat(201) }), /Invalid application search/);
+  const malformed = devtronApi({ origin: 'https://devtron.example', token: 'secret-token' }, async () =>
+    Response.json({ code: 200, result: { appContainers: [{ appId: 0, appName: 'bad', environments: [] }] } }));
+  await assert.rejects(malformed.listApplications(), /Invalid Devtron application inventory/);
+});
+
 test('declaration starts read-only and optional capabilities stay explicit', () => {
   const config = configuration({ HOST_ORIGIN: 'https://host.example', PUBLIC_URL: 'https://panel.example' });
   const base = declaration(config);

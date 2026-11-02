@@ -24,6 +24,19 @@ create cards automatically, enable transitions, request execution, claim card
 ownership, or perform provider mutations. Archive retains external DevTron
 state. Local unit tests do not prove deployed canary/provider acceptance.
 
+## Generic discovery
+
+The app is instance-generic: any HTTPS DevTron origin plus a read-only API
+token discovers applications and environments, then one selected
+application-environment scope produces signals.
+
+```sh
+DEVTRON_READ_TOKEN=... LANGBOARD_APP_TOKEN=... node observation.mjs discover config.json [SEARCH]
+```
+
+Discovery is read-only: `POST /orchestrator/app/list` with bounded pages.
+Observation reads the selected scope's deployment history only.
+
 ## Development
 
 ```sh

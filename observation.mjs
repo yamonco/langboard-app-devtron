@@ -18,19 +18,31 @@ export async function runObservation({ path, config, credentials, resend = false
     scope: config.scope, host, saveEnvelopes: envelopes => store.save(envelopes) }, request);
 }
 
+/** Generic discovery without a saved batch: read-only application-environment listing. */
+export async function runDiscovery(config, credentials, { search = '', offset = 0, size = 50 } = {}, request = fetch) {
+  const api = devtronApi({ origin: config.providerOrigin, token: credentials.providerToken }, request);
+  return api.listApplications({ search, offset, size });
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const [mode, configPath, outputPath, extra] = process.argv.slice(2);
-  if (!['observe', 'resend'].includes(mode) || !configPath || !outputPath || extra) {
-    console.error('Usage: observation.mjs observe|resend CONFIG FILE'); process.exitCode = 2;
+  if (!['observe', 'resend', 'discover'].includes(mode) || !configPath || (mode !== 'discover' && !outputPath) || extra) {
+    console.error('Usage: observation.mjs observe|resend CONFIG FILE | discover CONFIG [SEARCH]'); process.exitCode = 2;
   } else {
     try {
       const file = await readFile(configPath);
       if (file.length > 16384) throw new Error('Configuration exceeds limit');
-      const result = await runObservation({ path: outputPath, config: JSON.parse(file), resend: mode === 'resend',
-        credentials: { hostToken: process.env.LANGBOARD_APP_TOKEN, providerToken: process.env.DEVTRON_READ_TOKEN } });
-      process.stdout.write(JSON.stringify({ ...result, receipts: result.receipts.map(({ signal_uid, duplicate }) => ({ signal_uid, duplicate })) }) + '\n');
+      const config = JSON.parse(file);
+      const credentials = { hostToken: process.env.LANGBOARD_APP_TOKEN, providerToken: process.env.DEVTRON_READ_TOKEN };
+      if (mode === 'discover') {
+        const result = await runDiscovery(config, credentials, { search: outputPath || '' });
+        process.stdout.write(JSON.stringify(result) + '\n');
+      } else {
+        const result = await runObservation({ path: outputPath, config, resend: mode === 'resend', credentials });
+        process.stdout.write(JSON.stringify({ ...result, receipts: result.receipts.map(({ signal_uid, duplicate }) => ({ signal_uid, duplicate })) }) + '\n');
+      }
     } catch (error) {
       if (error instanceof DevtronReadError) console.error(error.message);
-      console.error('Observation failed; inspect the saved batch and native receipts before explicit resend.'); process.exitCode = 1; }
+      console.error('Operation failed; inspect provider and host state before an explicit retry.'); process.exitCode = 1; }
   }
 }

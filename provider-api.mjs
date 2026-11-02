@@ -19,6 +19,10 @@ export function devtronApi({ origin, token }, request = fetch) {
     throw new Error('Exact HTTPS origin and API token required');
   }
   async function get(endpoint, params = []) {
+    // Overload: object params select the bounded JSON POST contract.
+    return params && !Array.isArray(params) ? post(endpoint, params) : rawGet(endpoint, params);
+  }
+  async function rawGet(endpoint, params = []) {
     const response = await request(`${origin}/orchestrator/${endpoint}?${new URLSearchParams(params)}`, {
       method: 'GET', headers: { token, Accept: 'application/json' },
       redirect: 'error', signal: AbortSignal.timeout(15000),
@@ -39,7 +43,52 @@ export function devtronApi({ origin, token }, request = fetch) {
     } finally { await reader.cancel(); reader.releaseLock(); }
     return JSON.parse(Buffer.concat(chunks).toString('utf8'));
   }
+  async function post(endpoint, body) {
+    const response = await request(`${origin}/orchestrator/${endpoint}`, {
+      method: 'POST', headers: { token, Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body), redirect: 'error', signal: AbortSignal.timeout(15000),
+    });
+    if (!response.ok) {
+      await response.body?.cancel();
+      throw new DevtronReadError(response.status);
+    }
+    const reader = response.body.getReader(); let bytes = 0; const chunks = [];
+    try {
+      for (;;) {
+        const { done, value } = await reader.read(); if (done) break;
+        bytes += value.byteLength;
+        if (bytes > 1048576) throw new Error('Devtron response exceeds byte limit');
+        chunks.push(Buffer.from(value));
+      }
+    } finally { await reader.cancel(); reader.releaseLock(); }
+    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  }
   return {
+    /** Bounded generic discovery: flattened app-environment resources. */
+    async listApplications({ search = '', offset = 0, size = 50 } = {}) {
+      if (typeof search !== 'string' || search.length > 200) throw new Error('Invalid application search');
+      if (!Number.isInteger(offset) || offset < 0 || offset > 1_000_000_000 ||
+          !Number.isInteger(size) || size < 1 || size > 250) throw new Error('Invalid application page');
+      const payload = await get('app/list', { appNameSearch: search, offset, size });
+      const rows = payload?.result?.appContainers;
+      if (payload?.code !== 200 || !Array.isArray(rows)) throw new Error('Invalid Devtron application inventory');
+      const resources = [];
+      for (const row of rows.slice(0, 250)) {
+        if (!positiveInt(row?.appId) || typeof row.appName !== 'string' || !row.appName || row.appName.length > 200) {
+          throw new Error('Invalid Devtron application inventory');
+        }
+        const environments = Array.isArray(row.environments) ? row.environments : [];
+        for (const environment of environments.slice(0, 250)) {
+          if (!positiveInt(environment?.environmentId) || typeof environment.environmentName !== 'string' ||
+              !environment.environmentName || environment.environmentName.length > 200) {
+            throw new Error('Invalid Devtron application inventory');
+          }
+          resources.push({ appId: row.appId, appName: row.appName,
+            environmentId: environment.environmentId, environmentName: environment.environmentName });
+        }
+      }
+      return { total: typeof payload.result.appCount === 'number' ? payload.result.appCount : resources.length, resources };
+    },
     /** filterCriteria selects the exact Devtron application and environment scope. */
     async readDeployments({ appId, environmentId, limit = 50 }) {
       if (!positiveInt(appId) || !positiveInt(environmentId) || !Number.isInteger(limit) || limit < 1 || limit > 250) {
