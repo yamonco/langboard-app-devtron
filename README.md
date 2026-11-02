@@ -34,6 +34,14 @@ application-environment scope produces signals.
 DEVTRON_READ_TOKEN=... LANGBOARD_APP_TOKEN=... node observation.mjs discover config.json [SEARCH]
 ```
 
+Build a validated observation config from an explicit selection; credentials
+stay in environment variables and never enter the file:
+
+```sh
+DEVTRON_ORIGIN=https://devtron.example LANGBOARD_HOST_ORIGIN=https://host.example \
+  node observation.mjs init 1064 146 > config.json
+```
+
 Discovery is read-only: `POST /orchestrator/app/list` with bounded pages.
 Observation reads the selected scope's deployment history only.
 
