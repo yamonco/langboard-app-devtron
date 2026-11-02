@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="DevTron">
+<style>path{fill:#f8fafc}</style>
+<path d="M32 4 56 18v28L32 60 8 46V18L32 4Zm0 8-16 9.2v21.6L32 52l16-9.2V21.2L32 12Z"/>
+<path d="M24 22h10a10 10 0 0 1 0 20H24V22Zm7 6v8h3a4 4 0 0 0 0-8h-3Z"/>
+</svg>
