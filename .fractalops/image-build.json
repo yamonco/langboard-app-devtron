@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 2,
+  "profiles": {
+    "default": {
+      "context": ".",
+      "dockerfile": "Dockerfile",
+      "platform": "linux/amd64",
+      "network": "default"
+    }
+  }
+}
