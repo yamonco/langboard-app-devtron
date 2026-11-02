@@ -99,4 +99,6 @@ test('declaration starts read-only and optional capabilities stay explicit', () 
   const publish = declaration(config, { publishSignals: true });
   assert.deepEqual(publish.signal_sources, ['devtron', 'devtron-panel']);
   assert.deepEqual(publish.signal_policy.event_types, ['deployment.queued','deployment.started','deployment.succeeded','deployment.failed','deployment.cancelled']);
+  assert.equal(publish.signal_policy.commit_mode, 'optional');
+  assert.equal(publish.signal_policy.time_basis, 'provider_occurrence');
 });

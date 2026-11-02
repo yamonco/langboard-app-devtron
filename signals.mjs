@@ -5,7 +5,7 @@ export const signalPolicy = {
   version: 1, resource_types: ['application'],
   event_types: ['deployment.queued', 'deployment.started', 'deployment.succeeded', 'deployment.failed', 'deployment.cancelled'],
   outcome_states: { queued: 'queued', running: 'running', success: 'passed', failure: 'failed', cancelled: 'cancelled' },
-  commit_mode: 'commit', time_basis: 'provider_occurrence',
+  commit_mode: 'optional', time_basis: 'provider_occurrence',
 };
 
 export class MissingDeploymentTimestamp extends Error {
