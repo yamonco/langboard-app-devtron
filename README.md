@@ -60,3 +60,19 @@ deployed HTTPS `PUBLIC_URL`:
 PUBLIC_URL=https://devtron-panel.example npm run package -- --workflow-cards
 PUBLIC_URL=https://devtron-panel.example npm run package -- --publish-signals dist/app.zip
 ```
+
+## Container delivery
+
+The root `Dockerfile` packages the existing panel server with locked SDK packages
+and a digest-pinned Node 22 image. The process runs as the unprivileged `node`
+user on port 8780. Set `HOST_ORIGIN` to the exact Langboard HTTPS origin and
+`PUBLIC_URL` to the panel's HTTPS origin in the tenant deployment. The default
+container command enables the signal-publishing manifest profile.
+
+Build this Dockerfile through the company's approved BuildPlane project profile.
+Deploy the resulting verified image digest through the DevTron tenant delivery
+path. A container build alone does not establish panel registration, board consent,
+provider connectivity, or signal acceptance. `/manifest.json` supports unauthenticated
+GET/HEAD and can be used for the container's HTTP readiness probe. Provider and
+Langboard observation credentials belong in the separately scoped observer process;
+the panel container does not need those credentials.
