@@ -1,0 +1,5 @@
+# Synthetic render fixture only. Supply a verified image for real deployment.
+image: registry.example/devtron-panel@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+imageSourceRevision: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+hostOrigin: https://langboard.example
+publicUrl: https://devtron-panel.example
