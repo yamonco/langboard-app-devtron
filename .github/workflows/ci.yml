@@ -15,3 +15,23 @@ jobs:
       - run: npm ci --no-fund --no-audit
       - run: npm test
       - run: npm run manifest
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: v4.2.4
+      - name: Validate tenant chart and rejected bindings
+        shell: bash
+        run: |
+          set -euo pipefail
+          helm lint deploy/chart --set publicUrl=https://panel.example
+          helm template devtron-panel deploy/chart \
+            --namespace langboard-app-devtron --set publicUrl=https://panel.example \
+            > "$RUNNER_TEMP/devtron-panel.yaml"
+          if helm template devtron-panel deploy/chart > /dev/null 2>&1; then
+            echo 'Missing route binding was accepted' >&2
+            exit 1
+          fi
+          if helm template devtron-panel deploy/chart \
+            --set publicUrl=https://panel.example --set image=unsafe:latest > /dev/null 2>&1; then
+            echo 'Mutable image was accepted' >&2
+            exit 1
+          fi
