@@ -1,6 +1,0 @@
-# Company deployment binding, consumed explicitly; never loaded by the generic chart.
-# BuildPlane release: source41553547902 -> native41553599306 (success).
-image: ghcr.io/yamonco/langboard-app-devtron/default@sha256:7cc10bf76067fce5c9ebabb5c550a7e115969d34897e2730273cc996a1185b59
-imageSourceRevision: 7e4d48eb61f6e9cfef5be0810a9b2cda0e4b7b3f
-hostOrigin: https://langboard.yamon.io
-publicUrl: https://devtron-app.yamon.io

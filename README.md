@@ -69,9 +69,8 @@ user on port 8780. Set `HOST_ORIGIN` to the exact Langboard HTTPS origin and
 `PUBLIC_URL` to the panel's HTTPS origin in the tenant deployment. The default
 container command enables the signal-publishing manifest profile.
 
-Build this Dockerfile through the company's approved BuildPlane project profile.
-Deploy the resulting verified image digest through the DevTron tenant delivery
-path. A container build alone does not establish panel registration, board consent,
+Build the Dockerfile with your organization's image pipeline and deploy its
+verified immutable digest through your DevTron tenant delivery path. A container build alone does not establish panel registration, board consent,
 provider connectivity, or signal acceptance. `/manifest.json` supports unauthenticated
 GET/HEAD and can be used for the container's HTTP readiness probe. Provider and
 Langboard observation credentials belong in the separately scoped observer process;
@@ -81,8 +80,8 @@ the panel container does not need those credentials.
 Helm deployment through DevTron or an existing GitOps owner. The caller supplies an
 immutable verified image digest, its source revision, the exact Langboard HTTPS
 `hostOrigin` and the panel HTTPS `publicUrl`. No company URL is a chart default.
-`deploy/examples/values.yaml` is a synthetic render fixture. The explicit company
-binding belongs to `deploy/tenants/yamon.yaml` in this independent repository.
+`deploy/examples/values.yaml` is a synthetic render fixture. Keep real tenant
+bindings in your deployment system, outside this public source repository.
 The platform supplies the HTTPS route; host registration and board consent remain
 Langboard-native operations.
 The panel runs with a read-only filesystem, no Kubernetes token and bounded resources.
@@ -93,10 +92,10 @@ host registration and board consent remain separate acceptance steps.
 ## Product boundary and portability
 
 This repository owns the integration product, SDK packages, provider adapter,
-manifest, tests, image and deployment chart. FractalOps does not contain its app
-code, provider mappings, host policy, app-specific Argo project or release values.
-The owning organization may use its normal image CI; that is a build service,
-not a runtime dependency or an additional application authority.
+manifest, tests, container recipe and portable deployment chart. It has no runtime
+dependency on a company control plane, private API, custom scheduler or executor.
+Use your normal image build and deployment services with the standard Dockerfile
+and Helm chart.
 
 Any supported Langboard instance and HTTPS DevTron instance can be supplied through
 configuration. The adapter discovers applications/environments from the selected
@@ -110,6 +109,5 @@ Render a portable fixture with:
 helm template devtron-panel deploy/chart -f deploy/examples/values.yaml
 ```
 
- Select `deploy/tenants/yamon.yaml` explicitly only
-for the company deployment. Native Helm/DevTron deployment of that chart does not
-require adding product-specific resources to the FractalOps repository.
+ Native Helm/DevTron deployment uses explicit tenant values without importing
+product implementation into an infrastructure control-plane repository.
