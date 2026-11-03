@@ -102,3 +102,29 @@ test('declaration starts read-only and optional capabilities stay explicit', () 
   assert.equal(publish.signal_policy.commit_mode, 'optional');
   assert.equal(publish.signal_policy.time_basis, 'provider_occurrence');
 });
+
+test('native Helm history binds installed identity and preserves provider revision time', async () => {
+  const helmScope = { ...scope, installedAppId: 17, externalId: 'helm-app-17' };
+  const history = { version: 1, deployedAt: { seconds: 1793697063, nanos: 869895000 },
+    status: 'Succeeded', deployedBy: 'private-user', message: 'private', dockerImages: ['private-image'] };
+  const calls = [];
+  const api = devtronApi({ origin: 'https://devtron.example', token: 'secret-token' }, async (url, init) => {
+    calls.push([url, init]);
+    return Response.json({ code: 200, result: { installedAppInfo: { installedAppId: 17 }, deploymentHistory: [history] } });
+  });
+  const [row] = await api.readDeployments(helmScope);
+  assert.equal(new URL(calls[0][0]).pathname, '/orchestrator/application/deployment-history');
+  assert.equal(new URL(calls[0][0]).searchParams.get('installedAppId'), '17');
+  assert.equal(calls[0][1].method, 'GET');
+  const evidence = normalizeDeployment(row, helmScope);
+  assert.equal(evidence.external_id, 'helm-17-revision-1');
+  assert.equal(evidence.occurred_at, '2026-11-03T09:11:03.869Z');
+  assert.equal(evidence.outcome, 'success');
+  assert.equal(evidence.commit_sha, '');
+  assert.ok(!JSON.stringify(evidence).includes('private'));
+  assert.throws(() => normalizeDeployment(row, { ...helmScope, installedAppId: 18 }), /identity/);
+  assert.throws(() => normalizeDeployment({ ...row, deployedAt: { seconds: 0 } }, helmScope), MissingDeploymentTimestamp);
+  const wrong = devtronApi({ origin: 'https://devtron.example', token: 'secret-token' }, async () =>
+    Response.json({ code: 200, result: { installedAppInfo: { installedAppId: 18 }, deploymentHistory: [history] } }));
+  await assert.rejects(wrong.readDeployments(helmScope), /Helm deployment inventory/);
+});

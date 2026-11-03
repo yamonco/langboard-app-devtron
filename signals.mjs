@@ -22,6 +22,21 @@ const commitOf = row => {
 };
 
 export function normalizeDeployment(row, scope) {
+  if (row?.kind === 'helm') {
+    if (!Number.isInteger(row.version) || row.version < 1 || row.installedAppId !== scope.installedAppId) {
+      throw new Error('Invalid Helm deployment identity');
+    }
+    const { seconds, nanos = 0 } = row.deployedAt || {};
+    const epoch = Number(seconds);
+    if (!Number.isSafeInteger(epoch) || epoch <= 0 || !Number.isInteger(nanos) || nanos < 0 || nanos >= 1e9) {
+      throw new MissingDeploymentTimestamp();
+    }
+    const evidence = normalizeDeployment({ id: row.version, workflow_type: 'DEPLOY',
+      status: row.status, finished_on: new Date(epoch * 1000 + Math.floor(nanos / 1e6)).toISOString() }, scope);
+    const { event_id, ...fields } = evidence;
+    fields.external_id = `helm-${row.installedAppId}-revision-${row.version}`;
+    return { ...fields, event_id: createHash('sha256').update(JSON.stringify({ type: 'application', resource: scope.externalId, ...fields })).digest('hex') };
+  }
   if (!Number.isInteger(row?.id) || row?.workflow_type !== 'DEPLOY') throw new Error('Invalid deployment identity');
   const status = typeof row.status === 'string' ? row.status.toLowerCase() : '';
   let event, outcome, timestamp;
