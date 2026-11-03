@@ -76,3 +76,11 @@ provider connectivity, or signal acceptance. `/manifest.json` supports unauthent
 GET/HEAD and can be used for the container's HTTP readiness probe. Provider and
 Langboard observation credentials belong in the separately scoped observer process;
 the panel container does not need those credentials.
+
+`deploy/chart` supplies the tenant Deployment and ClusterIP Service for the existing
+Argo delivery owner. It pins the verified BuildPlane image digest and records its
+source revision separately from the chart revision. Set `publicUrl` to the assigned
+HTTPS panel origin before rendering; the platform owns the authenticated edge route.
+The panel runs with a read-only filesystem, no Kubernetes token and bounded resources.
+It requires no provider or Langboard observation credentials. DevTron visibility,
+host registration and board consent remain separate acceptance steps.

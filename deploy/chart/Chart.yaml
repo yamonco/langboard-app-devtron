@@ -1,0 +1,6 @@
+apiVersion: v2
+name: langboard-app-devtron
+description: Independently packaged Langboard DevTron panel
+type: application
+version: 0.1.0
+appVersion: 0.2.0
