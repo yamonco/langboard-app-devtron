@@ -30,6 +30,10 @@ spec:
       annotations:
         org.opencontainers.image.revision: {{ .Values.imageSourceRevision | quote }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
