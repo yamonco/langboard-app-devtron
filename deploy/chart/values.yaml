@@ -1,5 +1,6 @@
 image: ""
 imageSourceRevision: ""
+imagePullSecrets: []
 hostOrigin: ""
 # Set the platform-owned HTTPS route when binding this tenant.
 publicUrl: ""

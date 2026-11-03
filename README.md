@@ -79,7 +79,8 @@ the panel container does not need those credentials.
 `deploy/chart` supplies the portable Deployment and ClusterIP Service for a native
 Helm deployment through DevTron or an existing GitOps owner. The caller supplies an
 immutable verified image digest, its source revision, the exact Langboard HTTPS
-`hostOrigin` and the panel HTTPS `publicUrl`. No company URL is a chart default.
+`hostOrigin` and the panel HTTPS `publicUrl`. No company URL is a chart default. For a private registry, supply standard
+`imagePullSecrets` entries referencing existing tenant-managed Secrets.
 `deploy/examples/values.yaml` is a synthetic render fixture. Keep real tenant
 bindings in your deployment system, outside this public source repository.
 The platform supplies the HTTPS route; host registration and board consent remain
