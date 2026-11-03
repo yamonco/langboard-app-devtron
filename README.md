@@ -112,3 +112,21 @@ helm template devtron-panel deploy/chart -f deploy/examples/values.yaml
 
  Native Helm/DevTron deployment uses explicit tenant values without importing
 product implementation into an infrastructure control-plane repository.
+
+## Native Helm application observations
+
+For an app installed through DevTron's Chart Store, select its exact native
+`installedAppId` rather than a CI/CD pipeline identity:
+
+```sh
+DEVTRON_ORIGIN=https://devtron.example LANGBOARD_HOST_ORIGIN=https://host.example \
+  node observation.mjs init-helm 17 > config.json
+```
+
+The adapter reads `GET /orchestrator/application/deployment-history?installedAppId=17`,
+checks the returned installed-app identity, and uses Helm revision and provider
+`deployedAt` as evidence. It does not equate a successful Helm release with healthy
+Pods. Provider user names, values, messages and image lists are omitted from signals.
+Add the Langboard board/resource/revision bindings obtained through authorized SDK
+registration and board consent before running `observe`; initialization does not
+create or authorize those bindings.

@@ -90,7 +90,17 @@ export function devtronApi({ origin, token }, request = fetch) {
       return { total: typeof payload.result.appCount === 'number' ? payload.result.appCount : resources.length, resources };
     },
     /** filterCriteria selects the exact Devtron application and environment scope. */
-    async readDeployments({ appId, environmentId, limit = 50 }) {
+    async readDeployments({ appId, environmentId, installedAppId, limit = 50 }) {
+      if (installedAppId !== undefined) {
+        if (!positiveInt(installedAppId)) throw new Error('Invalid installed application scope');
+        const payload = await get('application/deployment-history', [['installedAppId', installedAppId]]);
+        const result = payload?.result;
+        if (payload?.code !== 200 || result?.installedAppInfo?.installedAppId !== installedAppId ||
+            !Array.isArray(result.deploymentHistory) || result.deploymentHistory.length > 250) {
+          throw new Error('Invalid Devtron Helm deployment inventory');
+        }
+        return result.deploymentHistory.map(row => ({ ...row, kind: 'helm', installedAppId }));
+      }
       if (!positiveInt(appId) || !positiveInt(environmentId) || !Number.isInteger(limit) || limit < 1 || limit > 250) {
         throw new Error('Invalid deployment scope');
       }

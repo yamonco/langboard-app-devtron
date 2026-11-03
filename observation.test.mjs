@@ -67,3 +67,9 @@ test('discovery reads provider only and never touches the signal store', async (
   assert.equal(await readFile(path, 'utf8').then(() => true, () => false), false);
  } finally { await rm(directory, { recursive: true, force: true }); }
 });
+
+test('Helm config uses an explicit native installed-app identity without pipeline assumptions', () => {
+ const config = buildConfig({ DEVTRON_ORIGIN: 'https://devtron.example', LANGBOARD_HOST_ORIGIN: 'https://host.example' }, { installedAppId: 17 });
+ assert.deepEqual(config.scope, { installedAppId: 17, externalId: 'helm-app-17', limit: 50 });
+ assert.throws(() => buildConfig({}, { installedAppId: 0 }), /Invalid application/);
+});
