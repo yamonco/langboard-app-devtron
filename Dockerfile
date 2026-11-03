@@ -4,6 +4,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY vendor/langboard-app-panel-0.2.3.tgz vendor/langboard-app-server-0.1.6.tgz ./vendor/
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund && npm cache clean --force
+# The server executes Node directly; package managers are install-time tools only.
+RUN node -e "const fs = require('node:fs'); for (const p of ['/usr/local/lib/node_modules/npm', '/usr/local/lib/node_modules/corepack', '/usr/local/bin/npm', '/usr/local/bin/npx', '/usr/local/bin/corepack']) fs.rmSync(p, {recursive: true, force: true})"
 COPY server.mjs archive.mjs signals.mjs ./
 COPY public ./public
 USER node
