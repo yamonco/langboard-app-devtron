@@ -77,10 +77,39 @@ GET/HEAD and can be used for the container's HTTP readiness probe. Provider and
 Langboard observation credentials belong in the separately scoped observer process;
 the panel container does not need those credentials.
 
-`deploy/chart` supplies the tenant Deployment and ClusterIP Service for the existing
-Argo delivery owner. It pins the verified BuildPlane image digest and records its
-source revision separately from the chart revision. Set `publicUrl` to the assigned
-HTTPS panel origin before rendering; the platform owns the authenticated edge route.
+`deploy/chart` supplies the portable Deployment and ClusterIP Service for a native
+Helm deployment through DevTron or an existing GitOps owner. The caller supplies an
+immutable verified image digest, its source revision, the exact Langboard HTTPS
+`hostOrigin` and the panel HTTPS `publicUrl`. No company URL is a chart default.
+`deploy/examples/values.yaml` is a synthetic render fixture. The explicit company
+binding belongs to `deploy/tenants/yamon.yaml` in this independent repository.
+The platform supplies the HTTPS route; host registration and board consent remain
+Langboard-native operations.
 The panel runs with a read-only filesystem, no Kubernetes token and bounded resources.
 It requires no provider or Langboard observation credentials. DevTron visibility,
 host registration and board consent remain separate acceptance steps.
+
+
+## Product boundary and portability
+
+This repository owns the integration product, SDK packages, provider adapter,
+manifest, tests, image and deployment chart. FractalOps does not contain its app
+code, provider mappings, host policy, app-specific Argo project or release values.
+The owning organization may use its normal image CI; that is a build service,
+not a runtime dependency or an additional application authority.
+
+Any supported Langboard instance and HTTPS DevTron instance can be supplied through
+configuration. The adapter discovers applications/environments from the selected
+DevTron instance; no company-specific app IDs or board IDs are compiled into it.
+Provider tokens remain in the operator-owned observer process. The panel uses
+Langboard's SDK and authorization, with exact host-origin framing.
+
+Render a portable fixture with:
+
+```sh
+helm template devtron-panel deploy/chart -f deploy/examples/values.yaml
+```
+
+ Select `deploy/tenants/yamon.yaml` explicitly only
+for the company deployment. Native Helm/DevTron deployment of that chart does not
+require adding product-specific resources to the FractalOps repository.

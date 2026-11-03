@@ -22,16 +22,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          helm lint deploy/chart --set publicUrl=https://panel.example
+          helm lint deploy/chart -f deploy/examples/values.yaml
           helm template devtron-panel deploy/chart \
-            --namespace langboard-app-devtron --set publicUrl=https://panel.example \
+            --namespace langboard-app-devtron -f deploy/examples/values.yaml \
             > "$RUNNER_TEMP/devtron-panel.yaml"
-          if helm template devtron-panel deploy/chart > /dev/null 2>&1; then
+          if helm template devtron-panel deploy/chart -f deploy/examples/values.yaml --set publicUrl= > /dev/null 2>&1; then
             echo 'Missing route binding was accepted' >&2
             exit 1
           fi
           if helm template devtron-panel deploy/chart \
-            --set publicUrl=https://panel.example --set image=unsafe:latest > /dev/null 2>&1; then
+            -f deploy/examples/values.yaml --set image=unsafe:latest > /dev/null 2>&1; then
             echo 'Mutable image was accepted' >&2
+            exit 1
+          fi
+          if helm template devtron-panel deploy/chart \
+            -f deploy/examples/values.yaml --set hostOrigin=https://host.example/path > /dev/null 2>&1; then
+            echo 'Invalid host origin was accepted' >&2
             exit 1
           fi
