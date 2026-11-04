@@ -15,6 +15,13 @@ jobs:
       - run: npm ci --no-fund --no-audit
       - run: npm test
       - run: npm run manifest
+      - name: Package portable signal publisher with the native SDK
+        run: node package.mjs --publish-signals dist/langboard-app-devtron.zip
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: devtron-publishing-package
+          path: dist/langboard-app-devtron.zip
+          if-no-files-found: error
       - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
           version: v4.2.4

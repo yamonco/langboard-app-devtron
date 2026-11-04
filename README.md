@@ -53,13 +53,23 @@ npm test
 npm run manifest
 ```
 
-Optional workflow-card and signal-publishing profiles require a separately
-deployed HTTPS `PUBLIC_URL`:
+A host-served signal-publishing package needs no external panel service or tenant
+URL. The organization and each board still approve the declared publishing
+capability; the observer uses its separately scoped app credential:
+
+```sh
+npm run package -- --publish-signals dist/app.zip
+```
+
+The optional workflow-card profile retains its explicit external HTTPS binding:
 
 ```sh
 PUBLIC_URL=https://devtron-panel.example npm run package -- --workflow-cards
-PUBLIC_URL=https://devtron-panel.example npm run package -- --publish-signals dist/app.zip
 ```
+
+Supplying `PUBLIC_URL` for a publishing package retains that explicit external
+trust target. Without it, the static package declares no external data origins.
+The default package remains read-only.
 
 ## Container delivery
 
