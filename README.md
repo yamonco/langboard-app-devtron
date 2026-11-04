@@ -140,3 +140,6 @@ Pods. Provider user names, values, messages and image lists are omitted from sig
 Add the Langboard board/resource/revision bindings obtained through authorized SDK
 registration and board consent before running `observe`; initialization does not
 create or authorize those bindings.
+
+See [official installation and observation acceptance](docs/installation.md) for
+the host setup, exact configuration fields, receipt checks and explicit recovery.
