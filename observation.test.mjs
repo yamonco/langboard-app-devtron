@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, stat, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -72,4 +73,23 @@ test('Helm config uses an explicit native installed-app identity without pipelin
  const config = buildConfig({ DEVTRON_ORIGIN: 'https://devtron.example', LANGBOARD_HOST_ORIGIN: 'https://host.example' }, { installedAppId: 17 });
  assert.deepEqual(config.scope, { installedAppId: 17, externalId: 'helm-app-17', limit: 50 });
  assert.throws(() => buildConfig({}, { installedAppId: 0 }), /Invalid application/);
+});
+
+test('external Helm config is stable and rejects mixed identity selections', () => {
+  const env = { DEVTRON_ORIGIN: 'https://devtron.example', LANGBOARD_HOST_ORIGIN: 'https://host.example' };
+  const selected = buildConfig(env, { helmAppId: '7|team-a|sample' });
+  assert.equal(selected.scope.helmAppId, '7|team-a|sample');
+  assert.match(selected.scope.externalId, /^helm-release-[a-f0-9]{64}$/);
+  assert.deepEqual(buildConfig(env, { helmAppId: '7|team-a|sample' }), selected);
+  assert.notEqual(buildConfig(env, { helmAppId: '7|team-b|sample' }).scope.externalId, selected.scope.externalId);
+  assert.throws(() => buildConfig(env, { helmAppId: '7|team-a|sample', installedAppId: 7 }), /Ambiguous/);
+});
+
+
+test('external Helm CLI emits only the selected config and accepts dotted release names', () => {
+  const env = { DEVTRON_ORIGIN: 'https://devtron.example', LANGBOARD_HOST_ORIGIN: 'https://host.example' };
+  const stdout = execFileSync(process.execPath, ['observation.mjs', 'init-external-helm', '7|team-a|sample.api'],
+    { encoding: 'utf8', env });
+  assert.deepEqual(JSON.parse(stdout), buildConfig(env, { helmAppId: '7|team-a|sample.api' }));
+  assert.ok(!stdout.includes('token') && !stdout.includes('Token'));
 });

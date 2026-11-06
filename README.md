@@ -143,3 +143,35 @@ create or authorize those bindings.
 
 See [official installation and observation acceptance](docs/installation.md) for
 the host setup, exact configuration fields, receipt checks and explicit recovery.
+
+## External Helm release observations
+
+Releases discovered by DevTron can exist without a Chart Store installation.
+Select their native `clusterId|namespace|releaseName` identity explicitly:
+
+```sh
+DEVTRON_ORIGIN=https://devtron.example LANGBOARD_HOST_ORIGIN=https://host.example \
+  node observation.mjs init-external-helm '7|team-a|sample' > config.json
+```
+
+This mode reads the official
+`GET /orchestrator/application/deployment-history?appId=...` route. It never
+converts the tuple into a numeric `installedAppId`. Use the generated opaque
+`scope.externalId` when selecting the Langboard resource; different namespaces
+and releases have different stable identities. Board consent and a scoped
+provider credential are still required.
+
+The upstream handler authorizes the selected tuple. History for an unlinked
+external release does not include `installedAppInfo` or echo the release identity;
+the adapter binds events to the exact configured query rather than claiming an
+independent response identity check. See the pinned
+[selector and authorization handler](https://github.com/devtron-labs/devtron/blob/58f2ae2ba25d8ba54a1b3d02ba91923cfe0adf8d/api/appStore/deployment/CommonDeploymentRestHandler.go)
+and [history response construction](https://github.com/devtron-labs/devtron/blob/58f2ae2ba25d8ba54a1b3d02ba91923cfe0adf8d/pkg/appStore/installedApp/service/AppStoreDeploymentService.go).
+
+The upstream [Helm history adapter](https://github.com/devtron-labs/kubelink/blob/1859c74af205f28d8306cb1d4180f53d4ff56218/pkg/service/helmApplicationService/helmAppService.go)
+returns Helm release status and `LastDeployed`. A Helm `deployed` status is
+deployment evidence, not Pod-health proof. Pending
+operations use the provider timestamp. `superseded`, `uninstalled`, `uninstalling`
+and `unknown` do not preserve the original deployment outcome and are reported
+as `provider_outcome_unavailable` rather than invented successes. Provider values,
+user names, messages and image lists remain outside the published signals.

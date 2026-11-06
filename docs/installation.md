@@ -97,7 +97,8 @@ current native resource snapshot:
 | --- | --- |
 | `hostOrigin` | Exact authorized Langboard HTTPS origin |
 | `providerOrigin` | Exact authorized DevTron HTTPS origin |
-| `scope.installedAppId` | Explicit Helm installed-app selection; omit for a pipeline |
+| `scope.installedAppId` | Explicit Chart Store installed-app selection; omit for a pipeline or external Helm release |
+| `scope.helmAppId` | External Helm tuple `clusterId\|namespace\|releaseName`; mutually exclusive with pipeline and installed-app IDs |
 | `scope.appId`, `scope.environmentId` | Explicit pipeline selection; omit for Helm |
 | `scope.externalId` | Exact external ID selected on the native inbound resource |
 | `scope.boardUID` | Intended Langboard board UID |
@@ -146,3 +147,10 @@ Retain non-secret release/source identities, native revisions, signal receipts a
 the exercised checks. Revoke a temporary app credential after the test through
 `ConnectionCredentials.revoke(connection_uid, credential_uid)`. Keep any batch
 whose publication is still unknown for explicit reconciliation.
+
+
+External Helm releases use `observation.mjs init-external-helm` as documented in
+[the README](../README.md#external-helm-release-observations). Select the exact
+`scope.externalId` emitted by initialization in the board resource settings.
+This identity is distinct from both `helm-app-17` and a pipeline app/environment
+identity. Existing release and namespace ownership are unchanged by observation.
