@@ -12,6 +12,29 @@ and installs the reviewed release. Record its release tag, package digest and
 native app revision. If the catalog entry is unavailable, catalog delivery is
 incomplete. Stop this installation path until the host provides it.
 
+For a reproducible installation, select an explicit reviewed release tag rather
+than an unrecorded latest release. The native catalog key is `devtron-panel`.
+The host exposes the following router-relative operations; use the API mount
+published by your deployed host instead of assuming a prefix:
+
+| Operation | Native route and input |
+| --- | --- |
+| Find the official entry | `GET /apps/catalog?key=devtron-panel` with an authorized user session |
+| Inspect installed definitions | `GET /settings/apps/packages` with an administrator session |
+| Install a reviewed release | `POST /settings/apps/packages/official/devtron-panel/install` with the reviewed `tag` and current `expected_revision` when updating an existing definition |
+
+Read back the installed definition and its official package provenance before
+proceeding. A locally uploaded ZIP does not establish official-catalog provenance.
+Do not retry an installation whose outcome is unknown; inspect the installed
+definition first. Record the returned app revision, not a revision copied from
+another instance or computed from a different package.
+
+The corresponding host contracts are
+[AppPackageSettingsApi](https://github.com/Langboard/langboard/blob/da78bb1abd810f9932f7fe90b45071db9a0c1f13/src/api/langboard/routes/settings/AppPackageSettingsApi.py)
+and [AppInboundConnectionApi](https://github.com/Langboard/langboard/blob/da78bb1abd810f9932f7fe90b45071db9a0c1f13/src/api/langboard/routes/settings/AppInboundConnectionApi.py).
+These source references document the API contract; confirm that your deployed
+host provides it before attempting installation.
+
 The portable publishing package declares `panels.render`, `signals.read` and
 `signals.publish`. It contains a host-served panel and needs no external panel
 service or tenant URL. It does not include the observer or any credentials.
@@ -33,6 +56,10 @@ credential used for publication. The native host owns all permission checks.
    intended board. The Python SDK exposes `AppManager.prepare_consent` and
    `AppManager.set_consent`, using the current app and binding revisions.
    Consent applies only to the reviewed board and declaration.
+   Native `POST /board/{board_uid}/settings/apps/devtron-panel/consent` prepares
+   consent using `app_revision`. Native `PUT` to the same route applies the
+   reviewed capabilities with the returned `app_revision`, `binding_uid` and
+   `expected_revision`. A conflict requires a fresh read and review.
 3. Discover or independently verify the exact DevTron application/environment or
    Helm installed-app identity using a suitably scoped read-only DevTron token.
    Select one `application` resource on the inbound connection through the native
