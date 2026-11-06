@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "profile": "backend",
+  "checks": {
+    "test-owner": {"enabled": true, "runner": {"manifest": "package.json", "script": "test"}, "productionRoots": ["."], "testRoots": ["."], "pairs": [{"subject": "public/view.mjs", "test": "panel-view.test.mjs"}, {"subject": "public/inbox.mjs", "test": "signal-inbox.test.mjs"}]},
+    "boundary": {
+      "enabled": true,
+      "internalRoots": ["."],
+      "modules": [
+        {"name": "panel-sdk-contract", "roots": ["node_modules/@langboard/app-panel"], "importPrefixes": ["/sdk/index.mjs", "@langboard/app-panel/inbox"]},
+        {"name": "deployment-observations", "roots": ["deployment-observation.mjs"], "allowExternal": ["node:crypto"]},
+        {"name": "devtron-adapter", "roots": ["provider-api.mjs"], "allow": ["deployment-observations"], "allowExternal": ["node:crypto"]},
+        {"name": "signal-publication", "roots": ["signals.mjs"], "allow": ["deployment-observations", "devtron-adapter"], "allowExternal": ["@langboard/app-server"]},
+        {"name": "observation-command", "roots": ["observation.mjs"], "allow": ["signal-publication", "devtron-adapter"], "allowExternal": ["node:fs/promises", "node:url", "@langboard/app-server"]},
+        {"name": "panel-runtime", "roots": ["server.mjs", "archive.mjs", "public"], "allow": ["deployment-observations", "panel-sdk-contract"], "allowExternal": ["node:http", "node:fs/promises", "node:url", "node:path", "@langboard/app-panel/inbox", "/sdk/index.mjs"]},
+        {"name": "packaging", "roots": ["package.mjs"], "allow": ["panel-runtime"], "allowExternal": ["node:util", "@langboard/app-server/packaging"]},
+        {"name": "verification", "roots": ["observation.test.mjs", "signals.test.mjs", "archive.test.mjs", "deployment-observation.test.mjs", "provider-api.test.mjs", "server.test.mjs", "package.test.mjs", "panel-view.test.mjs", "signal-inbox.test.mjs"], "allow": ["deployment-observations", "devtron-adapter", "signal-publication", "observation-command", "panel-runtime", "packaging"], "allowExternal": ["node:*"]}
+      ]
+    }
+  }
+}

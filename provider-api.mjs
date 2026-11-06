@@ -1,12 +1,13 @@
 import { createHash } from 'node:crypto';
+import { createDeploymentObservation, MissingDeploymentTimestamp } from './deployment-observation.mjs';
 
-const positiveInt = value => Number.isInteger(value) && value >= 1 && value <= 1_000_000_000;
+export const isNativeId = value => Number.isInteger(value) && value >= 1 && value <= 1_000_000_000;
 
 /** Explicit external Helm identity; never reinterpret a native tuple as an installed-app ID. */
 export function externalHelmScope(helmAppId) {
   const parts = typeof helmAppId === 'string' ? helmAppId.split('|') : [];
   const label = /^[a-z0-9](?:[-a-z0-9]*[a-z0-9])?$/;
-  if (parts.length !== 3 || !/^[1-9][0-9]{0,9}$/.test(parts[0]) || !positiveInt(Number(parts[0])) ||
+  if (parts.length !== 3 || !/^[1-9][0-9]{0,9}$/.test(parts[0]) || !isNativeId(Number(parts[0])) ||
       parts[1].length > 63 || !label.test(parts[1]) || parts[2].length > 53 ||
       !parts[2].split('.').every(part => label.test(part))) throw new Error('Invalid external Helm application identity');
   return { helmAppId, externalId: `helm-release-${createHash('sha256').update(helmAppId).digest('hex')}`, limit: 50 };
@@ -30,40 +31,19 @@ export function devtronApi({ origin, token }, request = fetch) {
   if (base.protocol !== 'https:' || base.origin !== origin || typeof token !== 'string' || token.length < 8 || token.length > 4096) {
     throw new Error('Exact HTTPS origin and API token required');
   }
-  async function get(endpoint, params = []) {
-    // Overload: object params select the bounded JSON POST contract.
-    return params && !Array.isArray(params) ? post(endpoint, params) : rawGet(endpoint, params);
-  }
-  async function rawGet(endpoint, params = []) {
-    const response = await request(`${origin}/orchestrator/${endpoint}?${new URLSearchParams(params)}`, {
-      method: 'GET', headers: { token, Accept: 'application/json' },
+  async function readInventory(endpoint, { query, body } = {}) {
+    const url = `${origin}/orchestrator/${endpoint}` + (query ? `?${new URLSearchParams(query)}` : '');
+    const response = await request(url, {
+      method: body === undefined ? 'GET' : 'POST',
+      headers: { token, Accept: 'application/json', ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       redirect: 'error', signal: AbortSignal.timeout(15000),
     });
     if (!response.ok) {
       await response.body?.cancel();
       throw new DevtronReadError(response.status);
     }
-    // Bound decoded bytes, not only row counts or Content-Length.
-    const reader = response.body.getReader(); let bytes = 0; const chunks = [];
-    try {
-      for (;;) {
-        const { done, value } = await reader.read(); if (done) break;
-        bytes += value.byteLength;
-        if (bytes > 1048576) throw new Error('Devtron response exceeds byte limit');
-        chunks.push(Buffer.from(value));
-      }
-    } finally { await reader.cancel(); reader.releaseLock(); }
-    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
-  }
-  async function post(endpoint, body) {
-    const response = await request(`${origin}/orchestrator/${endpoint}`, {
-      method: 'POST', headers: { token, Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify(body), redirect: 'error', signal: AbortSignal.timeout(15000),
-    });
-    if (!response.ok) {
-      await response.body?.cancel();
-      throw new DevtronReadError(response.status);
-    }
+    // One decoded-byte boundary for every native read, including inventory POST.
     const reader = response.body.getReader(); let bytes = 0; const chunks = [];
     try {
       for (;;) {
@@ -81,17 +61,17 @@ export function devtronApi({ origin, token }, request = fetch) {
       if (typeof search !== 'string' || search.length > 200) throw new Error('Invalid application search');
       if (!Number.isInteger(offset) || offset < 0 || offset > 1_000_000_000 ||
           !Number.isInteger(size) || size < 1 || size > 250) throw new Error('Invalid application page');
-      const payload = await get('app/list', { appNameSearch: search, offset, size });
+      const payload = await readInventory('app/list', { body: { appNameSearch: search, offset, size } });
       const rows = payload?.result?.appContainers;
       if (payload?.code !== 200 || !Array.isArray(rows)) throw new Error('Invalid Devtron application inventory');
       const resources = [];
       for (const row of rows.slice(0, 250)) {
-        if (!positiveInt(row?.appId) || typeof row.appName !== 'string' || !row.appName || row.appName.length > 200) {
+        if (!isNativeId(row?.appId) || typeof row.appName !== 'string' || !row.appName || row.appName.length > 200) {
           throw new Error('Invalid Devtron application inventory');
         }
         const environments = Array.isArray(row.environments) ? row.environments : [];
         for (const environment of environments.slice(0, 250)) {
-          if (!positiveInt(environment?.environmentId) || typeof environment.environmentName !== 'string' ||
+          if (!isNativeId(environment?.environmentId) || typeof environment.environmentName !== 'string' ||
               !environment.environmentName || environment.environmentName.length > 200) {
             throw new Error('Invalid Devtron application inventory');
           }
@@ -106,7 +86,7 @@ export function devtronApi({ origin, token }, request = fetch) {
       if (helmAppId !== undefined) {
         externalHelmScope(helmAppId);
         if ([appId, environmentId, installedAppId].some(value => value !== undefined)) throw new Error('Ambiguous deployment scope');
-        const payload = await get('application/deployment-history', [['appId', helmAppId]]);
+        const payload = await readInventory('application/deployment-history', { query: [['appId', helmAppId]] });
         // Unlinked external releases have no installedAppInfo. The native API
         // authorizes the exact tuple selector; its history does not echo it.
         const rows = payload?.result?.deploymentHistory;
@@ -114,8 +94,8 @@ export function devtronApi({ origin, token }, request = fetch) {
         return rows.map(row => ({ ...row, kind: 'helm', helmAppId }));
       }
       if (installedAppId !== undefined) {
-        if (!positiveInt(installedAppId)) throw new Error('Invalid installed application scope');
-        const payload = await get('application/deployment-history', [['installedAppId', installedAppId]]);
+        if (!isNativeId(installedAppId)) throw new Error('Invalid installed application scope');
+        const payload = await readInventory('application/deployment-history', { query: [['installedAppId', installedAppId]] });
         const result = payload?.result;
         if (payload?.code !== 200 || result?.installedAppInfo?.installedAppId !== installedAppId ||
             !Array.isArray(result.deploymentHistory) || result.deploymentHistory.length > 250) {
@@ -123,18 +103,65 @@ export function devtronApi({ origin, token }, request = fetch) {
         }
         return result.deploymentHistory.map(row => ({ ...row, kind: 'helm', installedAppId }));
       }
-      if (!positiveInt(appId) || !positiveInt(environmentId) || !Number.isInteger(limit) || limit < 1 || limit > 250) {
+      if (!isNativeId(appId) || !isNativeId(environmentId) || !Number.isInteger(limit) || limit < 1 || limit > 250) {
         throw new Error('Invalid deployment scope');
       }
-      const payload = await get('resource/history/deployment/cd-pipeline/v1', [
+      const payload = await readInventory('resource/history/deployment/cd-pipeline/v1', { query: [
         ['filterCriteria', `application/devtron-application|id|${appId}`],
         ['filterCriteria', `environment|id|${environmentId}`],
         ['offset', 0],
         ['limit', limit],
-      ]);
+      ] });
       const rows = payload?.result?.cdWorkflows;
       if (payload?.code !== 200 || !Array.isArray(rows)) throw new Error('Invalid Devtron deployment inventory');
       return rows;
     },
   };
+}
+
+
+export class UnreportableDeploymentStatus extends Error {
+  constructor() { super('Provider deployment outcome unavailable'); }
+}
+
+const phaseFromStatus = (status, started) => {
+  if (['progressing', 'running'].includes(status)) return started ? 'started' : 'queued';
+  const phases = { succeeded: 'succeeded', healthy: 'succeeded', failed: 'failed', degraded: 'failed', cancelled: 'cancelled' };
+  if (!Object.hasOwn(phases, status)) throw new Error(`Unsupported deployment status: ${status || 'missing'}`);
+  return phases[status];
+};
+const commitFromTriggers = row => {
+  for (const trigger of Object.values(row?.gitTriggers ?? {})) {
+    if (typeof trigger?.Commit === 'string' && /^[0-9a-f]{40}$/i.test(trigger.Commit)) return trigger.Commit.toLowerCase();
+  }
+  return '';
+};
+
+/** Translate DevTron snapshots once; never expose provider payloads to the panel. */
+export function deploymentObservationFromProvider(row, target) {
+  if (row?.kind === 'helm') {
+    const external = row.helmAppId !== undefined;
+    const release = external ? externalHelmScope(row.helmAppId).externalId : row.installedAppId;
+    if (!Number.isInteger(row.version) || row.version < 1 ||
+        (external ? row.helmAppId !== target.helmAppId || release !== target.externalId :
+          !Number.isInteger(release) || release < 1 || release !== target.installedAppId)) {
+      throw new Error('Invalid Helm deployment identity');
+    }
+    const { seconds, nanos = 0 } = row.deployedAt || {};
+    const epoch = Number(seconds);
+    if (!Number.isSafeInteger(epoch) || epoch <= 0 || !Number.isInteger(nanos) || nanos < 0 || nanos >= 1e9) {
+      throw new MissingDeploymentTimestamp();
+    }
+    const status = typeof row.status === 'string' ? row.status.toLowerCase() : '';
+    if (external && ['superseded', 'uninstalled', 'uninstalling', 'unknown'].includes(status)) throw new UnreportableDeploymentStatus();
+    const pending = external && ['pending-install', 'pending-upgrade', 'pending-rollback'].includes(status);
+    const phase = pending ? 'started' : external && status === 'deployed' ? 'succeeded' : phaseFromStatus(status, false);
+    const occurredAt = !pending && ['queued', 'started'].includes(phase) ? undefined : new Date(epoch * 1000 + Math.floor(nanos / 1e6)).toISOString();
+    return createDeploymentObservation({ phase, occurredAt, deploymentId: `helm-${release}-revision-${row.version}` }, target.externalId);
+  }
+  if (!Number.isInteger(row?.id) || row?.workflow_type !== 'DEPLOY') throw new Error('Invalid deployment identity');
+  const status = typeof row.status === 'string' ? row.status.toLowerCase() : '';
+  const phase = phaseFromStatus(status, !!row.started_on);
+  return createDeploymentObservation({ phase, occurredAt: ['queued', 'started'].includes(phase) ? row.started_on : row.finished_on,
+    deploymentId: `wfr-${row.id}`, commitSha: commitFromTriggers(row) }, target.externalId);
 }

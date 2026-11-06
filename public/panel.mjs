@@ -14,4 +14,9 @@ try {
   const Panel = createPanel(widgets, session, config);
   unmount = widgets.mount(container, widgets.React.createElement(Panel));
   session.signal.addEventListener('abort', release, { once: true });
-} catch (error) { session?.dispose(); release(); container.textContent = error instanceof Error ? error.message : 'Panel unavailable'; }
+} catch {
+  session?.dispose(); release();
+  container.textContent = session?.context?.language?.startsWith('ko')
+    ? '배포 이력을 열 수 없습니다. 패널을 닫고 다시 열어 주세요.'
+    : 'Deployment history is unavailable. Close and reopen the panel.';
+}

@@ -30,7 +30,7 @@ export function createPanel(widgets, session, { signalSources = [provider] } = {
       h('label', null, text('Status', '상태'), h('select', { value: outcome, onChange: e => filters(query, e.target.value), className: 'select w-full border rounded bg-background text-foreground p-2' }, h('option', { value: '' }, text('All', '전체')), ...outcomes.map(value => h('option', { key: value, value }, statusLabel(value))))),
       h(Button, { disabled: current.busy, onClick: () => void inbox.load() }, text('Refresh', '새로고침')),
       current.busy && h('p', { role: 'status' }, text('Loading…', '불러오는 중…')),
-      current.error && h('p', { role: 'alert' }, text('Read failed: ', '조회 실패: ') + current.error),
+      current.error && h('p', { role: 'alert' }, text('Deployment history could not be loaded. Refresh to try again.', '배포 이력을 불러오지 못했습니다. 새로고침으로 다시 시도하세요.')),
       !current.busy && !rows.length && h('p', { role: 'status' }, text('No matching inbox records.', '일치하는 수신함 기록이 없습니다.')),
       h('ul', { className: 'flex flex-col gap-3' }, ...rows.map((item, index) => h('li', { key: item.signal_uid || [item.external_id, item.commit_sha, index].join(':'), className: 'border rounded p-3' },
         h('strong', null, item.resource_name || item.external_id),
