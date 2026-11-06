@@ -1,32 +1,31 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { signalPublisher, signalStore } from '@langboard/app-server';
-import { devtronApi, DevtronReadError, externalHelmScope } from './provider-api.mjs';
-import { refreshDeployments } from './signals.mjs';
+import { devtronApi, DevtronReadError, externalHelmScope, isNativeId } from './provider-api.mjs';
+import { publishDeploymentObservations } from './signals.mjs';
 
 /** Operator-owned mapping, bounded read batch, explicit durable recovery only. */
 export async function runObservation({ path, config, credentials, resend = false }, request = fetch) {
   const host = { origin: config.hostOrigin, token: credentials.hostToken };
-  const publish = signalPublisher(host, request);
-  const store = signalStore(path, { origin: config.hostOrigin, providerOrigin: config.providerOrigin, ...config.scope });
+  const recoveryBatch = signalStore(path, { origin: config.hostOrigin, providerOrigin: config.providerOrigin, ...config.scope });
   if (resend) {
+    const publish = signalPublisher(host, request);
     const receipts = [];
-    for (const envelope of await store.load()) receipts.push(await publish(envelope));
+    for (const envelope of await recoveryBatch.load()) receipts.push(await publish(envelope));
     return { receipts };
   }
-  return refreshDeployments({ api: devtronApi({ origin: config.providerOrigin, token: credentials.providerToken }, request),
-    scope: config.scope, host, saveEnvelopes: envelopes => store.save(envelopes) }, request);
+  return publishDeploymentObservations({ api: devtronApi({ origin: config.providerOrigin, token: credentials.providerToken }, request),
+    scope: config.scope, host, saveEnvelopes: envelopes => recoveryBatch.save(envelopes) }, request);
 }
 
 /** Operator-owned observation config from explicit selection. Tokens stay in the environment. */
 export function buildConfig(env = process.env, { appId, environmentId, installedAppId, helmAppId } = {}) {
-  const positiveInt = value => Number.isInteger(value) && value >= 1 && value <= 1_000_000_000;
   let scope;
   if (helmAppId !== undefined) {
     if ([appId, environmentId, installedAppId].some(value => value !== undefined)) throw new Error('Ambiguous deployment scope');
     scope = externalHelmScope(helmAppId);
   } else {
-    if (installedAppId !== undefined ? !positiveInt(installedAppId) : (!positiveInt(appId) || !positiveInt(environmentId))) throw new Error('Invalid application-environment selection');
+    if (installedAppId !== undefined ? !isNativeId(installedAppId) : (!isNativeId(appId) || !isNativeId(environmentId))) throw new Error('Invalid application-environment selection');
     scope = installedAppId !== undefined ? { installedAppId, externalId: `helm-app-${installedAppId}`, limit: 50 } : { appId, environmentId, externalId: `app-${appId}-env-${environmentId}`, limit: 50 };
   }
   const origin = new URL(env.DEVTRON_ORIGIN || '');
@@ -56,16 +55,16 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         const result = buildConfig(process.env, mode === 'init-external-helm' ? { helmAppId: configPath } : mode === 'init-helm' ? { installedAppId: appId } : { appId, environmentId });
         process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       } else {
-      const file = await readFile(configPath);
-      if (file.length > 16384) throw new Error('Configuration exceeds limit');
-      const config = JSON.parse(file);
-      if (mode === 'discover') {
-        const result = await runDiscovery(config, credentials, { search: outputPath || '' });
-        process.stdout.write(JSON.stringify(result) + '\n');
-      } else {
-        const result = await runObservation({ path: outputPath, config, resend: mode === 'resend', credentials });
-        process.stdout.write(JSON.stringify({ ...result, receipts: result.receipts.map(({ signal_uid, duplicate }) => ({ signal_uid, duplicate })) }) + '\n');
-      }
+        const file = await readFile(configPath);
+        if (file.length > 16384) throw new Error('Configuration exceeds limit');
+        const config = JSON.parse(file);
+        if (mode === 'discover') {
+          const result = await runDiscovery(config, credentials, { search: outputPath || '' });
+          process.stdout.write(JSON.stringify(result) + '\n');
+        } else {
+          const result = await runObservation({ path: outputPath, config, resend: mode === 'resend', credentials });
+          process.stdout.write(JSON.stringify({ ...result, receipts: result.receipts.map(({ signal_uid, duplicate }) => ({ signal_uid, duplicate })) }) + '\n');
+        }
       }
     } catch (error) {
       if (error instanceof DevtronReadError) console.error(error.message);

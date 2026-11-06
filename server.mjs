@@ -1,5 +1,5 @@
 import { cardLifecycle } from './archive.mjs';
-import { signalPolicy } from './signals.mjs';
+import { signalPolicy } from './deployment-observation.mjs';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -47,7 +47,7 @@ export function panelServer(config = configuration(), { workflowCards = false, p
       const asset = paths.get(req.url);
       if (!asset) { res.writeHead(404); res.end('Not found'); return; }
       try { body = await readFile(resolve(root, asset[0])); type = asset[1]; }
-      catch { res.writeHead(503); res.end('Asset unavailable; run npm ci'); return; }
+      catch { res.writeHead(503); res.end('Panel unavailable'); return; }
     }
     res.writeHead(200, { 'Content-Type': type }); res.end(req.method === 'HEAD' ? undefined : body);
   });

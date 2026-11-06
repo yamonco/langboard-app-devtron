@@ -13,9 +13,10 @@ test('native SDK accepts portable publishing packages without tenant trust targe
   const result = spawnSync(process.execPath, ['package.mjs', '--publish-signals', output], { env, encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   const inspect = spawnSync(env.PYTHON || 'python3', ['-c',
-    'import json,sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); print(z.read("manifest.json").decode())', output], { env, encoding: 'utf8' });
+    'import json,sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); print(json.dumps({"manifest":json.loads(z.read("manifest.json")),"files":z.namelist()}))', output], { env, encoding: 'utf8' });
   assert.equal(inspect.status, 0, inspect.stderr);
-  const manifest = JSON.parse(inspect.stdout);
+  const { manifest, files } = JSON.parse(inspect.stdout);
+  assert.ok(files.every(path => !path.endsWith(".test.mjs")), "Production packages must exclude colocated tests");
   const metadata = JSON.parse(await readFile(new URL('./package.json', import.meta.url), 'utf8'));
   assert.equal(manifest.declaration.version, metadata.version,
     'Official installation requires the package declaration to match the release tag v' + metadata.version);

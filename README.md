@@ -191,3 +191,7 @@ and use the publishing ZIP from the successful CI for that exact source. Publish
 under `v<package.json version>`. Do not reuse an older publishing ZIP under a new
 tag, even when the observer change leaves panel code and capabilities unchanged.
 The package test verifies declaration and app-version agreement.
+
+## Code ownership
+
+See [deployment observation boundaries and vocabulary](docs/architecture.md) for the model, adapter, publication, panel and test owners. Run `npm test`; no custom test profile is required.
