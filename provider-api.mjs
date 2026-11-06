@@ -1,4 +1,16 @@
+import { createHash } from 'node:crypto';
+
 const positiveInt = value => Number.isInteger(value) && value >= 1 && value <= 1_000_000_000;
+
+/** Explicit external Helm identity; never reinterpret a native tuple as an installed-app ID. */
+export function externalHelmScope(helmAppId) {
+  const parts = typeof helmAppId === 'string' ? helmAppId.split('|') : [];
+  const label = /^[a-z0-9](?:[-a-z0-9]*[a-z0-9])?$/;
+  if (parts.length !== 3 || !/^[1-9][0-9]{0,9}$/.test(parts[0]) || !positiveInt(Number(parts[0])) ||
+      parts[1].length > 63 || !label.test(parts[1]) || parts[2].length > 53 ||
+      !parts[2].split('.').every(part => label.test(part))) throw new Error('Invalid external Helm application identity');
+  return { helmAppId, externalId: `helm-release-${createHash('sha256').update(helmAppId).digest('hex')}`, limit: 50 };
+}
 
 /** Safe diagnostics: never include URLs, response bodies or credentials. */
 export class DevtronReadError extends Error {
@@ -90,7 +102,17 @@ export function devtronApi({ origin, token }, request = fetch) {
       return { total: typeof payload.result.appCount === 'number' ? payload.result.appCount : resources.length, resources };
     },
     /** filterCriteria selects the exact Devtron application and environment scope. */
-    async readDeployments({ appId, environmentId, installedAppId, limit = 50 }) {
+    async readDeployments({ appId, environmentId, installedAppId, helmAppId, limit = 50 }) {
+      if (helmAppId !== undefined) {
+        externalHelmScope(helmAppId);
+        if ([appId, environmentId, installedAppId].some(value => value !== undefined)) throw new Error('Ambiguous deployment scope');
+        const payload = await get('application/deployment-history', [['appId', helmAppId]]);
+        // Unlinked external releases have no installedAppInfo. The native API
+        // authorizes the exact tuple selector; its history does not echo it.
+        const rows = payload?.result?.deploymentHistory;
+        if (payload?.code !== 200 || !Array.isArray(rows) || rows.length > 250) throw new Error('Invalid Devtron Helm deployment inventory');
+        return rows.map(row => ({ ...row, kind: 'helm', helmAppId }));
+      }
       if (installedAppId !== undefined) {
         if (!positiveInt(installedAppId)) throw new Error('Invalid installed application scope');
         const payload = await get('application/deployment-history', [['installedAppId', installedAppId]]);

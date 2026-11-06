@@ -128,3 +128,49 @@ test('native Helm history binds installed identity and preserves provider revisi
     Response.json({ code: 200, result: { installedAppInfo: { installedAppId: 18 }, deploymentHistory: [history] } }));
   await assert.rejects(wrong.readDeployments(helmScope), /Helm deployment inventory/);
 });
+
+test('external Helm reads the exact tuple without requiring a Chart Store installation', async () => {
+  const { externalHelmScope } = await import('./provider-api.mjs');
+  const selected = externalHelmScope('7|team-a|sample');
+  let calls = 0;
+  const history = { version: 2, status: 'deployed', deployedAt: { seconds: 1793697063 },
+    deployedBy: 'private-user', dockerImages: ['private-image'], message: 'private-message' };
+  const api = devtronApi({ origin: 'https://devtron.example', token: 'test-provider-token' }, async (url, init) => {
+    calls++;
+    const target = new URL(url);
+    assert.equal(target.pathname, '/orchestrator/application/deployment-history');
+    assert.deepEqual([...target.searchParams], [['appId', selected.helmAppId]]);
+    assert.equal(init.method, 'GET');
+    return Response.json({ code: 200, result: { deploymentHistory: [history] } });
+  });
+  const [row] = await api.readDeployments(selected);
+  const normalized = normalizeDeployment(row, selected);
+  assert.equal(normalized.outcome, 'success');
+  assert.equal(normalized.occurred_at, '2026-11-03T09:11:03.000Z');
+  assert.ok(!JSON.stringify(normalized).includes('private'));
+  assert.deepEqual(normalizeDeployment(row, selected), normalized);
+  const other = externalHelmScope('7|team-b|sample');
+  assert.throws(() => normalizeDeployment(row, other), /Invalid Helm deployment identity/);
+  assert.notEqual(normalizeDeployment({ ...row, helmAppId: other.helmAppId }, other).event_id, normalized.event_id);
+  await assert.rejects(api.readDeployments({ ...selected, installedAppId: 7 }), /Ambiguous/);
+  for (const id of ['7', '07|team-a|sample', '0|team-a|sample', '7|TEAM-A|sample', '7|team-a|../sample', '7|team-a|sample|extra', '7||sample']) {
+    await assert.rejects(api.readDeployments({ helmAppId: id }), /Invalid external Helm/);
+  }
+  assert.equal(calls, 1);
+});
+
+test('external Helm preserves pending time and does not invent superseded release success', async () => {
+  const { externalHelmScope } = await import('./provider-api.mjs');
+  const selected = { ...scope, ...externalHelmScope('7|team-a|sample') };
+  delete selected.appId; delete selected.environmentId;
+  const history = (version, status) => ({ kind: 'helm', helmAppId: selected.helmAppId,
+    version, status, deployedAt: { seconds: 1793697063 } });
+  const pending = normalizeDeployment(history(3, 'pending-upgrade'), selected);
+  assert.equal(pending.event_type, 'deployment.started');
+  assert.equal(pending.outcome, 'running');
+  const result = await refreshDeployments({ api: { readDeployments: async () => [history(1, 'superseded'), history(2, 'deployed')] },
+    scope: selected, host, saveEnvelopes: async envelopes => assert.equal(envelopes.length, 1) },
+    async () => Response.json({ signal_uid: 'signal00001', duplicate: false }));
+  assert.equal(result.receipts.length, 1);
+  assert.deepEqual(result.unreported, [{ deployment_id: 1, reason: 'provider_outcome_unavailable' }]);
+});
