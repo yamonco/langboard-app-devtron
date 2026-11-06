@@ -178,3 +178,16 @@ operations use the provider timestamp. `superseded`, `uninstalled`, `uninstallin
 and `unknown` do not preserve the original deployment outcome and are reported
 as `provider_outcome_unavailable` rather than invented successes. Provider values,
 user names, messages and image lists remain outside the published signals.
+
+## Release version contract
+
+`package.json` is the single app-version source for every declaration profile.
+The official catalog accepts a release tag only when its version (without the
+leading `v`) matches `manifest.json` → `declaration.version`. Archive
+`package_version` is a format version and does not replace this check.
+
+Set the app version with `npm version <version> --no-git-tag-version`, commit it,
+and use the publishing ZIP from the successful CI for that exact source. Publish
+under `v<package.json version>`. Do not reuse an older publishing ZIP under a new
+tag, even when the observer change leaves panel code and capabilities unchanged.
+The package test verifies declaration and app-version agreement.

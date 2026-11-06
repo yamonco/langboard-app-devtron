@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -16,6 +16,9 @@ test('native SDK accepts portable publishing packages without tenant trust targe
     'import json,sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); print(z.read("manifest.json").decode())', output], { env, encoding: 'utf8' });
   assert.equal(inspect.status, 0, inspect.stderr);
   const manifest = JSON.parse(inspect.stdout);
+  const metadata = JSON.parse(await readFile(new URL('./package.json', import.meta.url), 'utf8'));
+  assert.equal(manifest.declaration.version, metadata.version,
+    'Official installation requires the package declaration to match the release tag v' + metadata.version);
   assert.ok(manifest.declaration.capabilities.includes('signals.publish'));
   assert.deepEqual(manifest.declaration.trust.data_origins, []);
   assert.ok(manifest.declaration.signal_policy);
