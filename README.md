@@ -134,8 +134,9 @@ DEVTRON_ORIGIN=https://devtron.example LANGBOARD_HOST_ORIGIN=https://host.exampl
 ```
 
 The adapter reads `GET /orchestrator/application/deployment-history?installedAppId=17`,
-checks the returned installed-app identity, and uses Helm revision and provider
-`deployedAt` as evidence. It does not equate a successful Helm release with healthy
+checks the returned installed-app identity, and uses the provider history version
+and returned `deployedAt` as evidence. A DevTron-managed history version can differ
+from the physical Helm release revision; treat it as an opaque provider identity. It does not equate a successful Helm release with healthy
 Pods. Provider user names, values, messages and image lists are omitted from signals.
 Add the Langboard board/resource/revision bindings obtained through authorized SDK
 registration and board consent before running `observe`; initialization does not
@@ -168,9 +169,11 @@ independent response identity check. See the pinned
 [selector and authorization handler](https://github.com/devtron-labs/devtron/blob/58f2ae2ba25d8ba54a1b3d02ba91923cfe0adf8d/api/appStore/deployment/CommonDeploymentRestHandler.go)
 and [history response construction](https://github.com/devtron-labs/devtron/blob/58f2ae2ba25d8ba54a1b3d02ba91923cfe0adf8d/pkg/appStore/installedApp/service/AppStoreDeploymentService.go).
 
-The upstream [Helm history adapter](https://github.com/devtron-labs/kubelink/blob/1859c74af205f28d8306cb1d4180f53d4ff56218/pkg/service/helmApplicationService/helmAppService.go)
+For an unlinked external release, the upstream [Helm history adapter](https://github.com/devtron-labs/kubelink/blob/1859c74af205f28d8306cb1d4180f53d4ff56218/pkg/service/helmApplicationService/helmAppService.go)
 returns Helm release status and `LastDeployed`. A Helm `deployed` status is
-deployment evidence, not Pod-health proof. Pending
+deployment evidence, not Pod-health proof. Linked releases may return managed
+history versions and statuses instead; neither the version nor timestamp is
+claimed to be an independently verified Helm revision or readiness result. Pending
 operations use the provider timestamp. `superseded`, `uninstalled`, `uninstalling`
 and `unknown` do not preserve the original deployment outcome and are reported
 as `provider_outcome_unavailable` rather than invented successes. Provider values,
