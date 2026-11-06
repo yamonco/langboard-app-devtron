@@ -139,7 +139,7 @@ For acceptance, read the published signal in the authorized board inbox, confirm
 its selected resource and deployment identity, and open the DevTron panel under
 the same board permission. Explicitly resending an accepted envelope should return
 the same signal identity with `duplicate: true`, without another inbox entry.
-Test only the selected deployment evidence; a successful Helm revision does not
+Test only the selected deployment evidence; a successful provider deployment record does not
 prove Pod health. Package installation, provider read access, signal receipt and
 authenticated panel display are separate acceptance results.
 
