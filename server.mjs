@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
+const { version: appVersion } = JSON.parse(await readFile(new URL('./package.json', import.meta.url), 'utf8'));
 export function configuration(env = process.env) {
   const host = new URL(env.HOST_ORIGIN || 'http://127.0.0.1:5173');
   if (!['http:', 'https:'].includes(host.protocol) || host.origin !== (env.HOST_ORIGIN || 'http://127.0.0.1:5173')) throw new Error('HOST_ORIGIN must be an exact HTTP(S) origin');
@@ -14,9 +15,9 @@ export function configuration(env = process.env) {
   return { hostOrigin: host.origin, publicUrl: publicUrl.origin };
 }
 export function declaration(config, { workflowCards = false, publishSignals = false } = {}) {
-  const manifest = { schema_version: 1, key: 'devtron-panel', version: '0.1.0', name: 'DevTron Panel', description: 'Deployment history from the authorized Langboard signal inbox.', capabilities: ['panels.render', 'signals.read'], signal_sources: ['devtron'], resource_types: ['application'], panel: { url: config.publicUrl + '/', name: 'DevTron', icon: 'devtron' } };
+  const manifest = { schema_version: 1, key: 'devtron-panel', version: appVersion, name: 'DevTron Panel', description: 'Deployment history from the authorized Langboard signal inbox.', capabilities: ['panels.render', 'signals.read'], signal_sources: ['devtron'], resource_types: ['application'], panel: { url: config.publicUrl + '/', name: 'DevTron', icon: 'devtron' } };
   if (!workflowCards && !publishSignals) return manifest;
-  return { ...manifest, schema_version: 2, version: publishSignals ? '0.2.0' : '0.1.1',
+  return { ...manifest, schema_version: 2,
     capabilities: [...manifest.capabilities, ...(workflowCards ? ['cards.read', 'cards.create'] : []), ...(publishSignals ? ['signals.publish'] : [])],
     ...(workflowCards ? { card_lifecycle: cardLifecycle } : {}),
     ...(publishSignals ? { signal_policy: signalPolicy, signal_sources: [...manifest.signal_sources, manifest.key] } : {}),
