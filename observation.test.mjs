@@ -93,3 +93,16 @@ test('external Helm CLI emits only the selected config and accepts dotted releas
   assert.deepEqual(JSON.parse(stdout), buildConfig(env, { helmAppId: '7|team-a|sample.api' }));
   assert.ok(!stdout.includes('token') && !stdout.includes('Token'));
 });
+
+
+test('configuration never silently discards a second deployment selector', () => {
+  const env = { DEVTRON_ORIGIN: 'https://devtron.example', LANGBOARD_HOST_ORIGIN: 'https://host.example' };
+  for (const target of [
+    { installedAppId: 17, appId: 1064 },
+    { installedAppId: 17, environmentId: 146 },
+    { installedAppId: 17, appId: 1064, environmentId: 146 },
+    { helmAppId: '7|team-a|sample', appId: 1064 },
+    { helmAppId: '7|team-a|sample', environmentId: 146 },
+    { helmAppId: '7|team-a|sample', installedAppId: 17 },
+  ]) assert.throws(() => buildConfig(env, target), /Ambiguous deployment scope/);
+});

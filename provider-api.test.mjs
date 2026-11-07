@@ -75,7 +75,8 @@ test('generic discovery lists bounded app-environment resources', async () => {
 });
 
 test('native Helm history binds installed identity and preserves provider revision time', async () => {
-  const helmScope = { ...scope, installedAppId: 17, externalId: 'helm-app-17' };
+  const { appId, environmentId, ...binding } = scope;
+  const helmScope = { ...binding, installedAppId: 17, externalId: 'helm-app-17' };
   const history = { version: 1, deployedAt: { seconds: 1793697063, nanos: 869895000 },
     status: 'Succeeded', deployedBy: 'private-user', message: 'private', dockerImages: ['private-image'] };
   const calls = [];
@@ -137,4 +138,22 @@ test('GET history and POST discovery share the decoded-byte limit', async () => 
     async () => new Response(new Uint8Array(1048577), { headers: { 'Content-Length': '0' } }));
   await assert.rejects(api.readDeployments(scope), /byte limit/);
   await assert.rejects(api.listApplications(), /byte limit/);
+});
+
+
+test('mixed deployment selectors fail before any provider request', async () => {
+  let requests = 0;
+  const api = devtronApi({ origin: 'https://devtron.example', token: 'secret-token' }, async () => {
+    requests++;
+    throw new Error('Unexpected provider request');
+  });
+  for (const target of [
+    { installedAppId: 17, appId: 1064 },
+    { installedAppId: 17, environmentId: 146 },
+    { installedAppId: 17, appId: 1064, environmentId: 146 },
+    { helmAppId: '7|team-a|sample', appId: 1064 },
+    { helmAppId: '7|team-a|sample', environmentId: 146 },
+    { helmAppId: '7|team-a|sample', installedAppId: 17 },
+  ]) await assert.rejects(api.readDeployments(target), /Ambiguous deployment scope/);
+  assert.equal(requests, 0);
 });
