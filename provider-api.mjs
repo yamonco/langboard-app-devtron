@@ -3,6 +3,12 @@ import { createDeploymentObservation, MissingDeploymentTimestamp } from './deplo
 
 export const isNativeId = value => Number.isInteger(value) && value >= 1 && value <= 1_000_000_000;
 
+/** Native application/environment, installed app and external Helm are exclusive selectors. */
+export function assertUnambiguousDeploymentScope({ appId, environmentId, installedAppId, helmAppId }) {
+  const selected = [appId !== undefined || environmentId !== undefined, installedAppId !== undefined, helmAppId !== undefined];
+  if (selected.filter(Boolean).length > 1) throw new Error('Ambiguous deployment scope');
+}
+
 /** Explicit external Helm identity; never reinterpret a native tuple as an installed-app ID. */
 export function externalHelmScope(helmAppId) {
   const parts = typeof helmAppId === 'string' ? helmAppId.split('|') : [];
@@ -83,9 +89,9 @@ export function devtronApi({ origin, token }, request = fetch) {
     },
     /** filterCriteria selects the exact Devtron application and environment scope. */
     async readDeployments({ appId, environmentId, installedAppId, helmAppId, limit = 50 }) {
+      assertUnambiguousDeploymentScope({ appId, environmentId, installedAppId, helmAppId });
       if (helmAppId !== undefined) {
         externalHelmScope(helmAppId);
-        if ([appId, environmentId, installedAppId].some(value => value !== undefined)) throw new Error('Ambiguous deployment scope');
         const payload = await readInventory('application/deployment-history', { query: [['appId', helmAppId]] });
         // Unlinked external releases have no installedAppInfo. The native API
         // authorizes the exact tuple selector; its history does not echo it.

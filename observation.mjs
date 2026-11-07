@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { signalPublisher, signalStore } from '@langboard/app-server';
-import { devtronApi, DevtronReadError, externalHelmScope, isNativeId } from './provider-api.mjs';
+import { devtronApi, DevtronReadError, externalHelmScope, isNativeId, assertUnambiguousDeploymentScope } from './provider-api.mjs';
 import { publishDeploymentObservations } from './signals.mjs';
 
 /** Operator-owned mapping, bounded read batch, explicit durable recovery only. */
@@ -20,9 +20,9 @@ export async function runObservation({ path, config, credentials, resend = false
 
 /** Operator-owned observation config from explicit selection. Tokens stay in the environment. */
 export function buildConfig(env = process.env, { appId, environmentId, installedAppId, helmAppId } = {}) {
+  assertUnambiguousDeploymentScope({ appId, environmentId, installedAppId, helmAppId });
   let scope;
   if (helmAppId !== undefined) {
-    if ([appId, environmentId, installedAppId].some(value => value !== undefined)) throw new Error('Ambiguous deployment scope');
     scope = externalHelmScope(helmAppId);
   } else {
     if (installedAppId !== undefined ? !isNativeId(installedAppId) : (!isNativeId(appId) || !isNativeId(environmentId))) throw new Error('Invalid application-environment selection');
