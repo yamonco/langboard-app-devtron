@@ -95,7 +95,7 @@ current native resource snapshot:
 
 | Configuration field | Source |
 | --- | --- |
-| `hostOrigin` | Exact authorized Langboard HTTPS origin |
+| `hostOrigin` | Exact authorized Langboard HTTPS API origin |
 | `providerOrigin` | Exact authorized DevTron HTTPS origin |
 | `scope.installedAppId` | Explicit Chart Store installed-app selection; omit for a pipeline or external Helm release |
 | `scope.helmAppId` | External Helm tuple `clusterId\|namespace\|releaseName`; mutually exclusive with pipeline and installed-app IDs |
@@ -106,6 +106,12 @@ current native resource snapshot:
 | `scope.appRevision` | Current native `app_revision` |
 | `scope.bindingRevision` | Current native `binding_revision` |
 | `scope.limit` | Bounded provider page size; initializer uses 50 |
+
+The observer's `hostOrigin` (initialized from `LANGBOARD_HOST_ORIGIN`) targets the
+Langboard API. Obtain that origin from your deployed host's documentation; it can
+differ from the web UI origin. The standalone panel server's `HOST_ORIGIN` instead
+identifies the web UI allowed to embed the panel. Supply each origin explicitly
+for your installation; do not assume that an API request can use the UI address.
 
 Inject `DEVTRON_READ_TOKEN` and `LANGBOARD_APP_TOKEN` through your approved secret
 manager into the observer environment. Use a DevTron read-only credential scoped
