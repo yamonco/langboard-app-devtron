@@ -26,9 +26,11 @@ state. Local unit tests do not prove deployed canary/provider acceptance.
 
 ## Generic discovery
 
-The app is instance-generic: any HTTPS DevTron origin plus a read-only API
-token discovers applications and environments, then one selected
-application-environment scope produces signals.
+The app is instance-generic: a configured HTTPS DevTron origin and an authorized
+read-only API token discover applications and environments through the native
+API, then one explicitly selected deployment target produces signals. The
+instance must expose the native routes and response contracts documented below;
+this is not a claim of compatibility with every DevTron version or custom fork.
 
 ```sh
 DEVTRON_READ_TOKEN=... LANGBOARD_APP_TOKEN=... node observation.mjs discover config.json [SEARCH]
@@ -113,6 +115,19 @@ configuration. The adapter discovers applications/environments from the selected
 DevTron instance; no company-specific app IDs or board IDs are compiled into it.
 Provider tokens remain in the operator-owned observer process. The panel uses
 Langboard's SDK and authorization, with exact host-origin framing.
+
+Employee login, identity-provider configuration, registry and build-cache setup,
+build infrastructure, and deployment orchestration belong to the installation.
+The app does not require a particular SSO provider, secret manager, registry,
+cluster layout, or company control plane. Use an existing Kubernetes Secret or
+another operator-managed credential source to supply the observer's environment;
+neither choice adds a product dependency. Tenant URLs, resource selections and
+secret references stay in installation configuration outside this repository.
+
+If an installation exposes a different API contract, report that incompatibility
+explicitly. Shared adapter changes must follow a native DevTron contract and be
+tested with synthetic instance data; do not add tenant-name checks, fixed resource
+IDs, private API fallbacks or authentication bypasses.
 
 Render a portable fixture with:
 
