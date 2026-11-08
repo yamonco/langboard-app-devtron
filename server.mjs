@@ -20,7 +20,7 @@ export function declaration(config, { workflowCards = false, publishSignals = fa
   return { ...manifest, schema_version: 2,
     capabilities: [...manifest.capabilities, ...(workflowCards ? ['cards.read', 'cards.create'] : []), ...(publishSignals ? ['signals.publish'] : [])],
     ...(workflowCards ? { card_lifecycle: cardLifecycle } : {}),
-    ...(publishSignals ? { signal_policy: signalPolicy, signal_sources: [...manifest.signal_sources, manifest.key] } : {}),
+    ...(publishSignals ? { signal_policy: signalPolicy, signal_sources: [manifest.key, ...manifest.signal_sources] } : {}),
     trust: { authentication_origins: [], mcp_origins: [], data_origins: [config.publicUrl] },
   };
 }

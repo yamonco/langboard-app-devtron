@@ -13,7 +13,7 @@ test('declaration starts read-only and optional capabilities stay explicit', () 
   assert.equal(cards.card_lifecycle.deployment.restore, 'retain_external_state');
   assert.equal(cards.capabilities.includes('execution.run'), false);
   const publish = declaration(config, { publishSignals: true });
-  assert.deepEqual(publish.signal_sources, ['devtron', 'devtron-panel']);
+  assert.deepEqual(publish.signal_sources, ['devtron-panel', 'devtron']);
   assert.deepEqual(publish.signal_policy.event_types, ['deployment.queued','deployment.started','deployment.succeeded','deployment.failed','deployment.cancelled']);
   assert.equal(publish.signal_policy.commit_mode, 'optional');
   assert.equal(publish.signal_policy.time_basis, 'provider_occurrence');
@@ -59,11 +59,11 @@ test('publishing profile exposes declared sources and reads external app evidenc
   const manifest = await (await fetch(url+'/manifest.json')).json();
   const module = await (await fetch(url+'/config.mjs')).text();
   const browser = JSON.parse(module.slice('export default '.length, -1));
-  assert.deepEqual(browser.signalSources, ['devtron','devtron-panel']);
+  assert.deepEqual(new Set(browser.signalSources), new Set(['devtron','devtron-panel']));
   assert.deepEqual(browser.signalSources, manifest.signal_sources);
   const states=[],requests=[];
   const item={provider:'devtron-panel',external_id:'wfr-1',outcome:'success'};
-  const inbox=createInbox({signal:new AbortController().signal,request:async(_,params)=>{requests.push(params);return {items:[item,{provider:'devtron',external_id:'old'}],next_cursor:null}}},state=>states.push(state),'devtron-panel');
+  const inbox=createInbox({signal:new AbortController().signal,request:async(_,params)=>{requests.push(params);return {items:[item,{provider:'devtron',external_id:'old'}],next_cursor:null}}},state=>states.push(state),browser.signalSources[0]);
   await inbox.start();
   assert.deepEqual(requests,[{provider:'devtron-panel'}]);
   assert.deepEqual(visibleItems(states.at(-1).items,'','','devtron-panel'),[item]);
