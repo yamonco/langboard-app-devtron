@@ -2,7 +2,7 @@
 {{- if not (regexMatch "^https://[^/?#@]+$" $hostOrigin) -}}
 {{- fail "hostOrigin must be an HTTPS origin without a trailing slash" -}}
 {{- end -}}
-{{- if not (regexMatch "^[a-f0-9]{40}$" .Values.imageSourceRevision) -}}
+{{- if and .Values.imageSourceRevision (not (regexMatch "^[a-f0-9]{40}$" .Values.imageSourceRevision)) -}}
 {{- fail "imageSourceRevision must be the image source commit" -}}
 {{- end -}}
 {{- $publicUrl := required "publicUrl must be the panel HTTPS origin" .Values.publicUrl -}}
@@ -27,8 +27,10 @@ spec:
   template:
     metadata:
       labels: *labels
+      {{- with .Values.imageSourceRevision }}
       annotations:
-        org.opencontainers.image.revision: {{ .Values.imageSourceRevision | quote }}
+        org.opencontainers.image.revision: {{ . | quote }}
+      {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:

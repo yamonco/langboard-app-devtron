@@ -1,4 +1,5 @@
 image: ""
+# Optional informational metadata; keep empty when the delivery platform owns source history.
 imageSourceRevision: ""
 imagePullSecrets: []
 hostOrigin: ""
