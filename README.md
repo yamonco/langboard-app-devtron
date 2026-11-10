@@ -58,7 +58,6 @@ Observation reads the selected scope's deployment history only.
 ```sh
 npm ci
 npm test
-npm run manifest
 ```
 
 A host-served signal-publishing package needs no external panel service or tenant
@@ -85,6 +84,10 @@ Skip this section for the official host-served package. The container and chart
 are an alternative for installations that explicitly choose to host panel assets
 outside Langboard. They do not read DevTron or run the observer, and deploying
 them does not complete API integration.
+
+For external-hosting development only, run `node server.mjs --publish-signals`.
+Its `/manifest.json` describes that external server, not the host-served package.
+Validate the official installation artifact with the SDK packaging command above.
 
 The root `Dockerfile` packages the existing panel server with locked SDK packages
 and a digest-pinned Node 22 image. The process runs as the unprivileged `node`
