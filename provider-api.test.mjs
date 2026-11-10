@@ -74,6 +74,26 @@ test('generic discovery lists bounded app-environment resources', async () => {
   await assert.rejects(malformed.listApplications(), /Invalid Devtron application inventory/);
 });
 
+test('discovery rejects incomplete oversized inventories instead of silently truncating them', async () => {
+  const environment = { environmentId: 146, environmentName: 'prod' };
+  const app = { appId: 1064, appName: 'core-api', environments: [environment] };
+  for (const appContainers of [
+    Array(251).fill(app),
+    [{ ...app, environments: Array(251).fill(environment) }],
+    [{ ...app, environments: { private: 'not an environment list' } }],
+  ]) {
+    const api = devtronApi({ origin: 'https://devtron.example', token: 'secret-token' }, async () =>
+      Response.json({ code: 200, result: { appContainers } }));
+    await assert.rejects(api.listApplications(), /^Error: Invalid Devtron application inventory$/);
+  }
+});
+
+test('native CD history applies the same inventory bound as Helm history', async () => {
+  const api = devtronApi({ origin: 'https://devtron.example', token: 'secret-token' }, async () =>
+    Response.json({ code: 200, result: { cdWorkflows: Array(251).fill(row) } }));
+  await assert.rejects(api.readDeployments(scope), /^Error: Invalid Devtron deployment inventory$/);
+});
+
 test('native Helm history binds installed identity and preserves provider revision time', async () => {
   const { appId, environmentId, ...binding } = scope;
   const helmScope = { ...binding, installedAppId: 17, externalId: 'helm-app-17' };
