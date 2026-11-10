@@ -68,10 +68,11 @@ capability; the observer uses its separately scoped app credential:
 npm run package -- --publish-signals dist/app.zip
 ```
 
-The optional workflow-card profile retains its explicit external HTTPS binding:
+The optional workflow-card profile also uses the host-served package. It adds
+explicit card permissions and retain-on-archive policy, not a separate service:
 
 ```sh
-PUBLIC_URL=https://devtron-panel.example npm run package -- --workflow-cards
+npm run package -- --workflow-cards
 ```
 
 Supplying `PUBLIC_URL` for a publishing package retains that explicit external
