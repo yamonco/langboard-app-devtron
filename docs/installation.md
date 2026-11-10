@@ -5,6 +5,21 @@ Langboard and DevTron HTTPS origins. Keep tenant settings and credentials outsid
 this repository. A compatible deployed host is required; an SDK version or a
 passing package test alone does not establish compatibility.
 
+## Installation boundary
+
+Use the existing DevTron service. Install the official package in Langboard;
+Langboard hosts its panel assets. Do not deploy this repository's Dockerfile or
+Helm chart as a prerequisite. Those artifacts only support optional external
+panel hosting and contain no provider observer.
+
+The current package displays observations already published to Langboard. It
+does not retrieve DevTron history when the panel opens. The API observer below
+reads the selected DevTron resource and publishes through the public SDK. It is
+a one-shot command, not a required HTTP service; use an existing authorized
+execution environment. The pinned SDK's inbound connection establishes host
+identity and permissions, not an outbound DevTron REST proxy. Package installation
+alone therefore does not establish working provider collection.
+
 ## Install the reviewed package
 
 An authorized Langboard administrator selects DevTron in the official app catalog
@@ -109,7 +124,8 @@ current native resource snapshot:
 
 The observer's `hostOrigin` (initialized from `LANGBOARD_HOST_ORIGIN`) targets the
 Langboard API. Obtain that origin from your deployed host's documentation; it can
-differ from the web UI origin. The standalone panel server's `HOST_ORIGIN` instead
+differ from the web UI origin. For optional external panel hosting only, the
+standalone panel server's `HOST_ORIGIN` instead
 identifies the web UI allowed to embed the panel. Supply each origin explicitly
 for your installation; do not assume that an API request can use the UI address.
 

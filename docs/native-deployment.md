@@ -1,4 +1,9 @@
-# Native Devtron deployment chart
+# Optional external panel deployment chart
+
+The official Langboard app package is hosted by Langboard and does not need this
+chart, a separate panel service or a container image. Use this guide only when
+explicitly choosing external panel hosting. This chart serves panel assets; it
+does not run the DevTron API observer or establish a Langboard connection.
 
 The portable chart includes Devtron's standard `.image_descriptor_template.json`.
 Register a reviewed chart archive under **Deployment Charts** and select that

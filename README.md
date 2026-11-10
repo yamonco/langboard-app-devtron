@@ -4,6 +4,12 @@ Separately packaged Langboard app using only the public Langboard SDK/API. The
 app owns DevTron deployment-history normalization. Langboard owns policy,
 storage, authorization and replay.
 
+Install the official app package in Langboard and connect it to your existing
+DevTron instance. Langboard serves the packaged panel; a separate panel server,
+container, Helm release or public panel URL is not required for this path.
+See [installation and API observation](docs/installation.md) for the separate
+connection, resource selection and signal-publication steps.
+
 Reads use the official DevTron Deployment History API:
 
 - `GET {origin}/orchestrator/resource/history/deployment/cd-pipeline/v1`
@@ -73,7 +79,12 @@ Supplying `PUBLIC_URL` for a publishing package retains that explicit external
 trust target. Without it, the static package declares no external data origins.
 The default package remains read-only.
 
-## Container delivery
+## Optional external panel hosting
+
+Skip this section for the official host-served package. The container and chart
+are an alternative for installations that explicitly choose to host panel assets
+outside Langboard. They do not read DevTron or run the observer, and deploying
+them does not complete API integration.
 
 The root `Dockerfile` packages the existing panel server with locked SDK packages
 and a digest-pinned Node 22 image. The process runs as the unprivileged `node`
@@ -111,8 +122,9 @@ host registration and board consent remain separate acceptance steps.
 This repository owns the integration product, SDK packages, provider adapter,
 manifest, tests, container recipe and portable deployment chart. It has no runtime
 dependency on a company control plane, private API, custom scheduler or executor.
-Use your normal image build and deployment services with the standard Dockerfile
-and Helm chart.
+The standard installation uses the Langboard-hosted package and the existing
+DevTron API. Only an installation choosing external panel hosting needs its own
+image build and deployment services for the optional Dockerfile and Helm chart.
 
 Any supported Langboard instance and HTTPS DevTron instance can be supplied through
 configuration. The adapter discovers applications/environments from the selected
