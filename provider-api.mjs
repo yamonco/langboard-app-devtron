@@ -69,14 +69,17 @@ export function devtronApi({ origin, token }, request = fetch) {
           !Number.isInteger(size) || size < 1 || size > 250) throw new Error('Invalid application page');
       const payload = await readInventory('app/list', { body: { appNameSearch: search, offset, size } });
       const rows = payload?.result?.appContainers;
-      if (payload?.code !== 200 || !Array.isArray(rows)) throw new Error('Invalid Devtron application inventory');
+      if (payload?.code !== 200 || !Array.isArray(rows) || rows.length > 250) throw new Error('Invalid Devtron application inventory');
       const resources = [];
-      for (const row of rows.slice(0, 250)) {
+      for (const row of rows) {
         if (!isNativeId(row?.appId) || typeof row.appName !== 'string' || !row.appName || row.appName.length > 200) {
           throw new Error('Invalid Devtron application inventory');
         }
         const environments = Array.isArray(row.environments) ? row.environments : [];
-        for (const environment of environments.slice(0, 250)) {
+        if (environments.length > 250 || (row.environments != null && !Array.isArray(row.environments))) {
+          throw new Error('Invalid Devtron application inventory');
+        }
+        for (const environment of environments) {
           if (!isNativeId(environment?.environmentId) || typeof environment.environmentName !== 'string' ||
               !environment.environmentName || environment.environmentName.length > 200) {
             throw new Error('Invalid Devtron application inventory');
@@ -119,7 +122,7 @@ export function devtronApi({ origin, token }, request = fetch) {
         ['limit', limit],
       ] });
       const rows = payload?.result?.cdWorkflows;
-      if (payload?.code !== 200 || !Array.isArray(rows)) throw new Error('Invalid Devtron deployment inventory');
+      if (payload?.code !== 200 || !Array.isArray(rows) || rows.length > 250) throw new Error('Invalid Devtron deployment inventory');
       return rows;
     },
   };
