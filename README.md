@@ -78,56 +78,20 @@ Supplying `PUBLIC_URL` for a publishing package retains that explicit external
 trust target. Without it, the static package declares no external data origins.
 The default package remains read-only.
 
-## Optional external panel hosting
+## Panel preview
 
-Skip this section for the official host-served package. The container and chart
-are an alternative for installations that explicitly choose to host panel assets
-outside Langboard. They do not read DevTron or run the observer, and deploying
-them does not complete API integration.
-
-For external-hosting development only, run `node server.mjs --publish-signals`.
-Its `/manifest.json` describes that external server, not the host-served package.
-Validate the official installation artifact with the SDK packaging command above.
-
-The root `Dockerfile` packages the existing panel server with locked SDK packages
-and a digest-pinned Node 22 image. The process runs as the unprivileged `node`
-user on port 8780. Set `HOST_ORIGIN` to the exact Langboard HTTPS origin and
-`PUBLIC_URL` to the panel's HTTPS origin in the tenant deployment. The default
-container command enables the signal-publishing manifest profile.
-
-Build the Dockerfile with your organization's image pipeline and deploy its
-verified immutable digest through your DevTron tenant delivery path. A container build alone does not establish panel registration, board consent,
-provider connectivity, or signal acceptance. `/manifest.json` supports unauthenticated
-GET/HEAD and can be used for the container's HTTP readiness probe. Provider and
-Langboard observation credentials belong in the separately scoped observer process;
-the panel container does not need those credentials.
-
-`deploy/chart` supplies the portable Deployment and ClusterIP Service for a native
-Helm deployment through DevTron or an existing GitOps owner. The caller supplies an
-immutable verified image digest, the exact Langboard HTTPS `hostOrigin` and the
-panel HTTPS `publicUrl`. `imageSourceRevision` is optional informational metadata;
-when supplied, it must be the image's 40-character source commit. Native CI/CD can
-retain source history without projecting that annotation. Leave it empty rather
-than retaining a previous image's source revision. No company URL is a chart default. For a private registry, supply standard
-`imagePullSecrets` entries referencing existing tenant-managed Secrets.
-`deploy/examples/values.yaml` is a synthetic render fixture. Keep real tenant
-bindings in your deployment system, outside this public source repository.
-The platform supplies the HTTPS route; host registration and board consent remain
-Langboard-native operations.
-For native image ingestion and GitOps CD, see [Devtron deployment charts](docs/native-deployment.md).
-The panel runs with a read-only filesystem, no Kubernetes token and bounded resources.
-It requires no provider or Langboard observation credentials. DevTron visibility,
-host registration and board consent remain separate acceptance steps.
-
+Langboard serves the official package. This app has no container image or Helm
+release to deploy. For local panel development only, `node server.mjs
+--publish-signals` previews the static assets; it does not collect DevTron data.
+Validate the installation artifact with the SDK packaging command above.
 
 ## Product boundary and portability
 
 This repository owns the integration product, SDK packages, provider adapter,
-manifest, tests, container recipe and portable deployment chart. It has no runtime
+manifest and tests. It has no runtime
 dependency on a company control plane, private API, custom scheduler or executor.
 The standard installation uses the Langboard-hosted package and the existing
-DevTron API. Only an installation choosing external panel hosting needs its own
-image build and deployment services for the optional Dockerfile and Helm chart.
+DevTron API. No separate panel deployment is required.
 
 Any supported Langboard instance and HTTPS DevTron instance can be supplied through
 configuration. The adapter discovers applications/environments from the selected
@@ -147,15 +111,6 @@ If an installation exposes a different API contract, report that incompatibility
 explicitly. Shared adapter changes must follow a native DevTron contract and be
 tested with synthetic instance data; do not add tenant-name checks, fixed resource
 IDs, private API fallbacks or authentication bypasses.
-
-Render a portable fixture with:
-
-```sh
-helm template devtron-panel deploy/chart -f deploy/examples/values.yaml
-```
-
- Native Helm/DevTron deployment uses explicit tenant values without importing
-product implementation into an infrastructure control-plane repository.
 
 ## Native Helm application observations
 

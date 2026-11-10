@@ -8,9 +8,8 @@ passing package test alone does not establish compatibility.
 ## Installation boundary
 
 Use the existing DevTron service. Install the official package in Langboard;
-Langboard hosts its panel assets. Do not deploy this repository's Dockerfile or
-Helm chart as a prerequisite. Those artifacts only support optional external
-panel hosting and contain no provider observer.
+Langboard hosts its panel assets. No separate container, Helm release or panel
+service is part of this installation.
 
 The current package displays observations already published to Langboard. It
 does not retrieve DevTron history when the panel opens. The API observer below
