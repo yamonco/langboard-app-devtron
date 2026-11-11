@@ -4,13 +4,23 @@ Separately packaged Langboard app using only the public Langboard SDK/API. The
 app owns DevTron deployment-history normalization. Langboard owns policy,
 storage, authorization and replay.
 
-Install the official app package in Langboard and connect it to your existing
-DevTron instance. Langboard serves the packaged panel; a separate panel server,
-container, Helm release or public panel URL is not required for this path.
-See [installation and API observation](docs/installation.md) for the separate
-connection, resource selection and signal-publication steps.
+Langboard serves the official packaged panel. A separate panel server, container,
+Helm release or public panel URL is not required. The current package displays
+signals already published to Langboard; opening it does not fetch DevTron history.
 
-Reads use the official DevTron Deployment History API:
+The intended standard installation uses a Langboard-managed provider connection
+and API reads. That generic SDK/host boundary is still pending in
+[SDK #7](https://github.com/Langboard/sdk/pull/7) and
+[host #248](https://github.com/Langboard/langboard/pull/248). Installing this package
+does not establish that capability. Keep direct provider reads marked unsupported
+until the deployed host and released SDK supply it; do not make operating an
+observer a prerequisite for the standard installation.
+
+The [installation and legacy observation guide](docs/installation.md) documents
+the current signal-based compatibility path. Its CLI is an explicit optional
+operator tool, not the standard installation or a required background service.
+
+The optional CLI reads the official DevTron Deployment History API:
 
 - `GET {origin}/orchestrator/resource/history/deployment/cd-pipeline/v1`
 - exact `application/devtron-application|id|{appId}` and `environment|id|{environmentId}`
@@ -18,7 +28,7 @@ Reads use the official DevTron Deployment History API:
 - `token` header authentication
 - bounded responses and bounded signal batches
 
-An administrator explicitly registers the packaged manifest. An authorized
+For optional legacy publication, an administrator registers the packaged manifest. An authorized
 organization manager connects the app and issues a short-lived credential. Each
 board manager explicitly consents and selects exact resources. `observe`
 publishes one signed observation using a separately scoped app credential.
@@ -30,7 +40,7 @@ create cards automatically, enable transitions, request execution, claim card
 ownership, or perform provider mutations. Archive retains external DevTron
 state. Local unit tests do not prove deployed canary/provider acceptance.
 
-## Generic discovery
+## Optional legacy API observation
 
 The app is instance-generic: a configured HTTPS DevTron origin and an authorized
 read-only API token discover applications and environments through the native
@@ -97,7 +107,8 @@ DevTron API. No separate panel deployment is required.
 Any supported Langboard instance and HTTPS DevTron instance can be supplied through
 configuration. The adapter discovers applications/environments from the selected
 DevTron instance; no company-specific app IDs or board IDs are compiled into it.
-Provider tokens remain in the operator-owned observer process. The panel uses
+For optional legacy publication, provider tokens remain in the operator-owned
+observer process. The panel uses
 Langboard's SDK and authorization, with exact host-origin framing.
 
 Employee login, identity-provider configuration, registry and build-cache setup,
