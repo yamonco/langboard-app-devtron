@@ -1,4 +1,4 @@
-# Official installation and observation acceptance
+# Packaged panel and optional legacy observation
 
 This guide uses the public Langboard SDK and native host APIs. Supply your own
 Langboard and DevTron HTTPS origins. Keep tenant settings and credentials outside
@@ -12,12 +12,24 @@ Langboard hosts its panel assets. No separate container, Helm release or panel
 service is part of this installation.
 
 The current package displays observations already published to Langboard. It
-does not retrieve DevTron history when the panel opens. The API observer below
-reads the selected DevTron resource and publishes through the public SDK. It is
-a one-shot command, not a required HTTP service; use an existing authorized
-execution environment. The pinned SDK's inbound connection establishes host
-identity and permissions, not an outbound DevTron REST proxy. Package installation
-alone therefore does not establish working provider collection.
+does not retrieve DevTron history when the panel opens. The pinned SDK's inbound
+connection establishes host identity and permissions, not an outbound DevTron
+REST proxy. Package installation alone therefore does not establish working
+provider collection.
+
+Standard installation must use the host's supported provider-connection and read
+capabilities when available. The proposed generic boundary remains under review
+in [SDK #7](https://github.com/Langboard/sdk/pull/7) and
+[host #248](https://github.com/Langboard/langboard/pull/248); these are source
+proposals, not released or deployed support. Until that boundary is available,
+direct provider reads remain unsupported. Do not require users to deploy,
+schedule or operate an observer to complete standard installation.
+
+The remaining connection, credential and observation steps describe an explicit
+optional legacy publication path. Its one-shot CLI reads the selected DevTron
+resource and publishes through the public SDK from an existing authorized
+environment. Choosing that compatibility path does not complete acceptance of
+observer-free provider reads and must not become a hidden installation dependency.
 
 ## Install the reviewed package
 
