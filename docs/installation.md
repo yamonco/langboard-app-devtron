@@ -13,7 +13,7 @@ service is part of this installation.
 
 Published release `v0.3.4` displays observations already published to Langboard.
 This development branch adds a current-resource history view but remains
-unreleased pending its official SDK update and installed-host acceptance. The pinned SDK's inbound
+unreleased pending candidate-package and installed-host acceptance. The pinned SDK's inbound
 connection establishes host identity and permissions, not an outbound DevTron
 REST proxy. Package installation alone therefore does not establish working
 provider collection.
@@ -23,8 +23,8 @@ capabilities. [SDK #7](https://github.com/Langboard/sdk/pull/7) and
 [host #248](https://github.com/Langboard/langboard/pull/248) are merged; #248 is
 management discovery, not panel dispatch. The integrated host implements the
 separate panel dispatch described below. The published app still uses its old
-SDK and signal-only panel. The direct-read implementation on this branch needs
-the corrected official SDK artifacts before release.
+SDK and signal-only panel. This branch pins corrected official CI candidate artifacts; actual installed
+provider acceptance remains required before release.
 Do not require users to deploy, schedule or operate an observer to complete
 standard installation.
 
@@ -64,13 +64,15 @@ and [Devtron response projection](https://github.com/Langboard/langboard/blob/96
 A deployed host must advertise support and authorize the actual selected resource;
 a source reference or candidate SDK alone is insufficient.
 
-The official panel candidate `0.2.8-rc.3` exports `dist/index.mjs`, while the
-current app-server `0.1.6` packager copies the old root `index.mjs` directly.
-Resolve that shared SDK packaging incompatibility through the SDK before
-updating this app's lockfile. Do not repack the candidate, copy its internals
-into this app, or add a separate observer as a workaround. Keep the existing
-package usable until the corrected official artifacts and installed-consumer
-packaging checks are available.
+This branch pins the official native CI candidate from
+[SDK PR12](https://github.com/Langboard/sdk/pull/12), source
+`ebedced1ec05205f73eaf248210c2577af4b1b56`, workflow `43726953026`, artifact
+`14166902548`. The corrected shared packager resolves the panel's public export,
+including the new `dist/index.mjs` layout. Original candidate bytes, sizes and
+hashes are recorded in `vendor/sdk-candidate-provenance.json`; npm integrity is
+recorded in the lockfile. These are CI candidates, not published registry releases.
+The corrected app-server candidate still identifies as `0.1.6`, so use its recorded
+source and hash rather than version alone. No candidate was repacked in this app.
 
 ## Install the reviewed package
 

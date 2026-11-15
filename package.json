@@ -4,14 +4,16 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13"
   },
   "scripts": {
     "test": "node --test",
     "package": "node package.mjs"
   },
   "dependencies": {
-    "@langboard/app-panel": "file:vendor/langboard-app-panel-0.2.3.tgz",
+    "@langboard/app-protocol": "file:vendor/langboard-app-protocol-0.1.0-rc.3.tgz",
+    "@langboard/host-runtime": "file:vendor/langboard-host-runtime-0.1.0-rc.3.tgz",
+    "@langboard/app-panel": "file:vendor/langboard-app-panel-0.2.8-rc.3.tgz",
     "@langboard/app-server": "file:vendor/langboard-app-server-0.1.6.tgz"
   }
 }

@@ -7,8 +7,8 @@ storage, authorization and replay.
 Langboard serves the official packaged panel. A separate panel server, container,
 Helm release or public panel URL is not required. Published release `v0.3.4` displays
 signals already published to Langboard. This development branch adds direct
-reads of host-selected resources; its SDK upgrade and release acceptance are
-still pending.
+reads of host-selected resources using the official CI candidate SDK. Release
+and installed-host acceptance remain pending.
 
 The standard installation uses a Langboard-managed provider connection and
 registered API reads. [SDK #7](https://github.com/Langboard/sdk/pull/7) and
@@ -19,8 +19,8 @@ The integrated host also implements `connections.read` for the registered
 do not update this app's pinned SDK or published release automatically.
 
 Observer-free provider reads in this development branch remain unreleased
-until its official SDK packaging, integration and
-installed-host allow/deny/revocation checks pass. Do not make operating an
+until its native candidate-package checks and installed-host
+allow/deny/revocation checks pass. Do not make operating an
 observer a prerequisite for the standard installation. See the
 [connection-read migration status](docs/installation.md#host-managed-read-migration)
 for the exact SDK and host contracts.
