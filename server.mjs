@@ -34,7 +34,7 @@ export function panelServer(config = configuration(), { workflowCards = false, p
     ['/provider-history.mjs', ['public/provider-history.mjs', 'text/javascript; charset=utf-8']],
     ['/inbox.mjs', ['public/inbox.mjs', 'text/javascript; charset=utf-8']],
     ['/sdk/inbox.mjs', ['node_modules/@langboard/app-panel/inbox.mjs', 'text/javascript; charset=utf-8']],
-    ['/sdk/index.mjs', ['node_modules/@langboard/app-panel/index.mjs', 'text/javascript; charset=utf-8']],
+    ['/sdk/index.mjs', [fileURLToPath(import.meta.resolve('@langboard/app-panel')), 'text/javascript; charset=utf-8']],
   ]);
   return createServer(async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
