@@ -5,8 +5,10 @@ app owns DevTron deployment-history normalization. Langboard owns policy,
 storage, authorization and replay.
 
 Langboard serves the official packaged panel. A separate panel server, container,
-Helm release or public panel URL is not required. The current package displays
-signals already published to Langboard; opening it does not fetch DevTron history.
+Helm release or public panel URL is not required. Published release `v0.3.4` displays
+signals already published to Langboard. This development branch adds direct
+reads of host-selected resources; its SDK upgrade and release acceptance are
+still pending.
 
 The standard installation uses a Langboard-managed provider connection and
 registered API reads. [SDK #7](https://github.com/Langboard/sdk/pull/7) and
@@ -14,10 +16,10 @@ registered API reads. [SDK #7](https://github.com/Langboard/sdk/pull/7) and
 latter adds management discovery; panel dispatch is a separate host contract.
 The integrated host also implements `connections.read` for the registered
 `deployments.list` read on a currently selected resource. These source changes
-do not update this app's pinned SDK or signal-only panel automatically.
+do not update this app's pinned SDK or published release automatically.
 
-This release still displays the signal inbox. Observer-free provider reads in
-this app remain incomplete until its SDK packaging, panel integration and
+Observer-free provider reads in this development branch remain unreleased
+until its official SDK packaging, integration and
 installed-host allow/deny/revocation checks pass. Do not make operating an
 observer a prerequisite for the standard installation. See the
 [connection-read migration status](docs/installation.md#host-managed-read-migration)

@@ -11,8 +11,9 @@ Use the existing DevTron service. Install the official package in Langboard;
 Langboard hosts its panel assets. No separate container, Helm release or panel
 service is part of this installation.
 
-The current package displays observations already published to Langboard. It
-does not retrieve DevTron history when the panel opens. The pinned SDK's inbound
+Published release `v0.3.4` displays observations already published to Langboard.
+This development branch adds a current-resource history view but remains
+unreleased pending its official SDK update and installed-host acceptance. The pinned SDK's inbound
 connection establishes host identity and permissions, not an outbound DevTron
 REST proxy. Package installation alone therefore does not establish working
 provider collection.
@@ -21,8 +22,9 @@ Standard installation uses the host's supported provider-connection and read
 capabilities. [SDK #7](https://github.com/Langboard/sdk/pull/7) and
 [host #248](https://github.com/Langboard/langboard/pull/248) are merged; #248 is
 management discovery, not panel dispatch. The integrated host implements the
-separate panel dispatch described below. This app release still uses its old
-SDK and signal-only panel, so direct reads in the app remain incomplete.
+separate panel dispatch described below. The published app still uses its old
+SDK and signal-only panel. The direct-read implementation on this branch needs
+the corrected official SDK artifacts before release.
 Do not require users to deploy, schedule or operate an observer to complete
 standard installation.
 

@@ -15,7 +15,7 @@ export function configuration(env = process.env) {
   return { hostOrigin: host.origin, publicUrl: publicUrl.origin };
 }
 export function declaration(config, { workflowCards = false, publishSignals = false } = {}) {
-  const manifest = { schema_version: 1, key: 'devtron-panel', version: appVersion, name: 'DevTron Panel', description: 'Deployment history from the authorized Langboard signal inbox.', capabilities: ['panels.render', 'signals.read'], signal_sources: ['devtron'], resource_types: ['application'], panel: { url: config.publicUrl + '/', name: 'DevTron', icon: 'devtron' } };
+  const manifest = { schema_version: 1, key: 'devtron-panel', version: appVersion, name: 'DevTron Panel', description: 'Deployment history for authorized resources and retained observations.', capabilities: ['panels.render', 'resources.read', 'signals.read'], signal_sources: ['devtron'], resource_types: ['application'], panel: { url: config.publicUrl + '/', name: 'DevTron', icon: 'devtron' } };
   if (!workflowCards && !publishSignals) return manifest;
   return { ...manifest, schema_version: 2,
     capabilities: [...manifest.capabilities, ...(workflowCards ? ['cards.read', 'cards.create'] : []), ...(publishSignals ? ['signals.publish'] : [])],
@@ -30,6 +30,8 @@ export function panelServer(config = configuration(), { workflowCards = false, p
     ['/', ['public/index.html', 'text/html; charset=utf-8']],
     ['/panel.mjs', ['public/panel.mjs', 'text/javascript; charset=utf-8']],
     ['/view.mjs', ['public/view.mjs', 'text/javascript; charset=utf-8']],
+    ['/provider-view.mjs', ['public/provider-view.mjs', 'text/javascript; charset=utf-8']],
+    ['/provider-history.mjs', ['public/provider-history.mjs', 'text/javascript; charset=utf-8']],
     ['/inbox.mjs', ['public/inbox.mjs', 'text/javascript; charset=utf-8']],
     ['/sdk/inbox.mjs', ['node_modules/@langboard/app-panel/inbox.mjs', 'text/javascript; charset=utf-8']],
     ['/sdk/index.mjs', ['node_modules/@langboard/app-panel/index.mjs', 'text/javascript; charset=utf-8']],

@@ -1,6 +1,7 @@
 import { connectPanel } from '/sdk/index.mjs';
 import config from './config.mjs';
 import { createPanel } from './view.mjs';
+import { createProviderPanel } from './provider-view.mjs';
 
 const container = document.querySelector('#app');
 let unmount;
@@ -11,7 +12,7 @@ try {
   const widgets = await session.widgets;
   if (session.signal.aborted) throw new Error('Panel closed');
   if (!widgets?.React || !widgets.Button || !widgets.Badge || !widgets.Input || !widgets.mount) throw new Error('Host widgets unavailable');
-  const Panel = createPanel(widgets, session, config);
+  const Panel = createProviderPanel(widgets, session, { LegacyPanel: createPanel(widgets, session, config) });
   unmount = widgets.mount(container, widgets.React.createElement(Panel));
   session.signal.addEventListener('abort', release, { once: true });
 } catch {
