@@ -15,7 +15,7 @@ export function configuration(env = process.env) {
   return { hostOrigin: host.origin, publicUrl: publicUrl.origin };
 }
 export function declaration(config, { workflowCards = false, publishSignals = false } = {}) {
-  const manifest = { schema_version: 1, key: 'devtron-panel', version: appVersion, name: 'DevTron Panel', description: 'Deployment history for authorized resources and retained observations.', capabilities: ['panels.render', 'resources.read', 'signals.read'], signal_sources: ['devtron'], resource_types: ['application'], panel: { url: config.publicUrl + '/', name: 'DevTron', icon: 'devtron' } };
+  const manifest = { schema_version: 1, key: 'devtron-panel', version: appVersion, name: 'Devtron', description: 'Deployment history for authorized resources and retained observations.', capabilities: ['panels.render', 'resources.read', 'signals.read'], signal_sources: ['devtron'], resource_types: ['application'], panel: { url: config.publicUrl + '/', name: 'Devtron', icon: 'devtron' } };
   if (!workflowCards && !publishSignals) return manifest;
   return { ...manifest, schema_version: 2,
     capabilities: [...manifest.capabilities, ...(workflowCards ? ['cards.read', 'cards.create'] : []), ...(publishSignals ? ['signals.publish'] : [])],
@@ -58,5 +58,5 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const config = configuration();
   const profile = { workflowCards: process.argv.includes("--workflow-cards"), publishSignals: process.argv.includes("--publish-signals") };
   if (process.argv.includes('--manifest')) process.stdout.write(JSON.stringify(declaration(config, profile), null, 2) + '\n');
-  else panelServer(config, profile).listen(Number(process.env.PORT || 8780), process.env.HOST || '127.0.0.1', () => console.log('DevTron panel listening'));
+  else panelServer(config, profile).listen(Number(process.env.PORT || 8780), process.env.HOST || '127.0.0.1', () => console.log('Devtron listening'));
 }
