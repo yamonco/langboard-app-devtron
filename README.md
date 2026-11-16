@@ -5,16 +5,25 @@ app owns DevTron deployment-history normalization. Langboard owns policy,
 storage, authorization and replay.
 
 Langboard serves the official packaged panel. A separate panel server, container,
-Helm release or public panel URL is not required. The current package displays
-signals already published to Langboard; opening it does not fetch DevTron history.
+Helm release or public panel URL is not required. Published release `v0.3.4` displays
+signals already published to Langboard. This development branch adds direct
+reads of host-selected resources using the official CI candidate SDK. Release
+and installed-host acceptance remain pending.
 
-The intended standard installation uses a Langboard-managed provider connection
-and API reads. That generic SDK/host boundary is still pending in
-[SDK #7](https://github.com/Langboard/sdk/pull/7) and
-[host #248](https://github.com/Langboard/langboard/pull/248). Installing this package
-does not establish that capability. Keep direct provider reads marked unsupported
-until the deployed host and released SDK supply it; do not make operating an
-observer a prerequisite for the standard installation.
+The standard installation uses a Langboard-managed provider connection and
+registered API reads. [SDK #7](https://github.com/Langboard/sdk/pull/7) and
+[host #248](https://github.com/Langboard/langboard/pull/248) have merged. The
+latter adds management discovery; panel dispatch is a separate host contract.
+The integrated host also implements `connections.read` for the registered
+`deployments.list` read on a currently selected resource. These source changes
+do not update this app's pinned SDK or published release automatically.
+
+Observer-free provider reads in this development branch remain unreleased
+until its native candidate-package checks and installed-host
+allow/deny/revocation checks pass. Do not make operating an
+observer a prerequisite for the standard installation. See the
+[connection-read migration status](docs/installation.md#host-managed-read-migration)
+for the exact SDK and host contracts.
 
 The [installation and legacy observation guide](docs/installation.md) documents
 the current signal-based compatibility path. Its CLI is an explicit optional

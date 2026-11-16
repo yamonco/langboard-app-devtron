@@ -11,25 +11,68 @@ Use the existing DevTron service. Install the official package in Langboard;
 Langboard hosts its panel assets. No separate container, Helm release or panel
 service is part of this installation.
 
-The current package displays observations already published to Langboard. It
-does not retrieve DevTron history when the panel opens. The pinned SDK's inbound
+Published release `v0.3.4` displays observations already published to Langboard.
+This development branch adds a current-resource history view but remains
+unreleased pending candidate-package and installed-host acceptance. The pinned SDK's inbound
 connection establishes host identity and permissions, not an outbound DevTron
 REST proxy. Package installation alone therefore does not establish working
 provider collection.
 
-Standard installation must use the host's supported provider-connection and read
-capabilities when available. The proposed generic boundary remains under review
-in [SDK #7](https://github.com/Langboard/sdk/pull/7) and
-[host #248](https://github.com/Langboard/langboard/pull/248); these are source
-proposals, not released or deployed support. Until that boundary is available,
-direct provider reads remain unsupported. Do not require users to deploy,
-schedule or operate an observer to complete standard installation.
+Standard installation uses the host's supported provider-connection and read
+capabilities. [SDK #7](https://github.com/Langboard/sdk/pull/7) and
+[host #248](https://github.com/Langboard/langboard/pull/248) are merged; #248 is
+management discovery, not panel dispatch. The integrated host implements the
+separate panel dispatch described below. The published app still uses its old
+SDK and signal-only panel. This branch pins corrected official CI candidate artifacts; actual installed
+provider acceptance remains required before release.
+Do not require users to deploy, schedule or operate an observer to complete
+standard installation.
 
 The remaining connection, credential and observation steps describe an explicit
 optional legacy publication path. Its one-shot CLI reads the selected DevTron
 resource and publishes through the public SDK from an existing authorized
 environment. Choosing that compatibility path does not complete acceptance of
 observer-free provider reads and must not become a hidden installation dependency.
+
+## Host-managed read migration
+
+Use the native contracts rather than adding a panel server or a generic HTTP
+proxy:
+
+- The SDK session advertises `supportedOperations`. Call `connections.read`
+  only when explicitly advertised. The input is
+  `{ connection_uid, read_key: "deployments.list", input: { resource_uid, access_revision, limit } }`.
+  Resource identities and current access revisions come from `resources.list`,
+  not fixed instance configuration or cached permission assumptions.
+- The host resolves the existing connection credential, accepts only its
+  registered provider read, and checks current app, board, actor, resource,
+  connection and secret authority before dispatch and again before returning.
+  The frame receives bounded deployment metadata. It never receives a token,
+  secret reference, URL, method or request headers.
+- A successful response is `{ ok: true, data: { items } }`. A denied, stale or
+  unavailable read must clear the displayed provider results. Do not silently
+  substitute legacy observations as if they were a current provider response,
+  automatically retry, or grant resource access from the panel.
+- Verify native-CD, installed-Helm and external-Helm selections separately.
+  Their deployment identities differ. Deployment success alone does not prove
+  application health.
+
+The source contracts are the
+[SDK connection-read contract](https://github.com/Langboard/sdk/blob/e5b343384e4e1f5c6c1ff5ea84ae5476a814e788/docs/connection-reads.md),
+[host dispatcher](https://github.com/Langboard/langboard/blob/966b8f17f67b12460d4419c4c70aa0f4787cb03f/src/api/langboard/apps/ConnectionReads.py)
+and [Devtron response projection](https://github.com/Langboard/langboard/blob/966b8f17f67b12460d4419c4c70aa0f4787cb03f/src/api/langboard/apps/DevtronRead.py).
+A deployed host must advertise support and authorize the actual selected resource;
+a source reference or candidate SDK alone is insufficient.
+
+This branch pins the official native CI candidate from
+[SDK PR12](https://github.com/Langboard/sdk/pull/12), source
+`ebedced1ec05205f73eaf248210c2577af4b1b56`, workflow `43726953026`, artifact
+`14166902548`. The corrected shared packager resolves the panel's public export,
+including the new `dist/index.mjs` layout. Original candidate bytes, sizes and
+hashes are recorded in `vendor/sdk-candidate-provenance.json`; npm integrity is
+recorded in the lockfile. These are CI candidates, not published registry releases.
+The corrected app-server candidate still identifies as `0.1.6`, so use its recorded
+source and hash rather than version alone. No candidate was repacked in this app.
 
 ## Install the reviewed package
 

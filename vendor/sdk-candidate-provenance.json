@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "repository": "https://github.com/Langboard/sdk",
+  "source_commit": "ebedced1ec05205f73eaf248210c2577af4b1b56",
+  "source_pr": "https://github.com/Langboard/sdk/pull/12",
+  "merged_commit": "aaa548e9589f2a2470139a0eef37d55cc4ca8a1d",
+  "workflow_run": 43726953026,
+  "artifact_id": 14166902548,
+  "artifact_digest": "sha256:9efcbf98b7e71b7f716234a8ca705def4a0b0bd94fe3c48d6980ee82a06c4bdb",
+  "published": false,
+  "note": "Native CI candidate, not a registry release. app-server keeps version0.1.6; source and file hash identify the corrected candidate. SOURCE_PROVENANCE.json in the upstream artifact describes an older source import and is not this candidate build identity.",
+  "packages": [
+    {
+      "name": "@langboard/app-protocol",
+      "version": "0.1.0-rc.3",
+      "file": "langboard-app-protocol-0.1.0-rc.3.tgz",
+      "sha256": "04dc2604a4484f0a12da8fecf3486782981244b81a4641136dd825f4206953aa",
+      "bytes": 7597
+    },
+    {
+      "name": "@langboard/host-runtime",
+      "version": "0.1.0-rc.3",
+      "file": "langboard-host-runtime-0.1.0-rc.3.tgz",
+      "sha256": "5b305042a92fba24772c192c25367927a085bd8c547bea86b9b02e78c61cc7b3",
+      "bytes": 8522
+    },
+    {
+      "name": "@langboard/app-panel",
+      "version": "0.2.8-rc.3",
+      "file": "langboard-app-panel-0.2.8-rc.3.tgz",
+      "sha256": "9cd3d4b7e975f9dc78bd2b9b857a4c1af8a6af140a709a26fd657ab2e4fd18e4",
+      "bytes": 20346
+    },
+    {
+      "name": "@langboard/app-server",
+      "version": "0.1.6",
+      "file": "langboard-app-server-0.1.6.tgz",
+      "sha256": "a143cd27359169dc219eb35ace2642253c19cdc590f2a49d1e9cc630b9b58a74",
+      "bytes": 8431
+    }
+  ]
+}

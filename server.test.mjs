@@ -7,7 +7,7 @@ test('declaration starts read-only and optional capabilities stay explicit', () 
   const config = configuration({ HOST_ORIGIN: 'https://host.example', PUBLIC_URL: 'https://panel.example' });
   const base = declaration(config);
   assert.equal(base.key, 'devtron-panel'); assert.deepEqual(base.signal_sources, ['devtron']);
-  assert.deepEqual(base.capabilities, ['panels.render', 'signals.read']);
+  assert.deepEqual(base.capabilities, ['panels.render', 'resources.read', 'signals.read']);
   const cards = declaration(config, { workflowCards: true });
   assert.equal(cards.schema_version, 2);
   assert.equal(cards.card_lifecycle.deployment.restore, 'retain_external_state');
@@ -25,7 +25,7 @@ test('public static routes, opaque iframe module CORS and declaration', async t 
   const server = panelServer(config); await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise(resolve => server.close(resolve)));
   const url = `http://127.0.0.1:${server.address().port}`;
-  for (const path of ['/', '/panel.mjs', '/inbox.mjs', '/view.mjs', '/config.mjs', '/sdk/index.mjs', '/manifest.json']) {
+  for (const path of ['/', '/panel.mjs', '/inbox.mjs', '/view.mjs', '/provider-view.mjs', '/provider-history.mjs', '/config.mjs', '/sdk/index.mjs', '/manifest.json']) {
     const response = await fetch(url + path); assert.equal(response.status, 200, path);
     assert.equal(response.headers.get('access-control-allow-origin'), '*');
     assert.match(response.headers.get('content-security-policy'), /frame-ancestors https:\/\/host.example/);
